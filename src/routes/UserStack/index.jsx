@@ -5,10 +5,7 @@ const MainUserStack = createNativeStackNavigator();
 const AppRoutes = () => {
     return (
       <MainUserStack.Navigator>
-        {/* <MainUserStack.Screen 
-          name="Messages" 
-          component={Messages}
-        /> */}
+        
       </MainUserStack.Navigator>
     );
   };
