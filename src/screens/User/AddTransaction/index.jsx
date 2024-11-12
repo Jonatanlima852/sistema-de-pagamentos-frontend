@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Text, TextInput, Button, SegmentedButtons } from 'react-native-paper';
 import { colors } from '../../../theme';
+import SafeScreen from '../../../components/SafeScreen';
 
 const AddTransaction = () => {
   const [transactionType, setTransactionType] = useState('expense');
@@ -11,56 +12,58 @@ const AddTransaction = () => {
   const [date, setDate] = useState(new Date());
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.content}>
-        <Text variant="headlineSmall" style={styles.title}>Nova Transação</Text>
+    <SafeScreen>
+      <ScrollView style={styles.container}>
+        <View style={styles.content}>
+          <Text variant="headlineSmall" style={styles.title}>Nova Transação</Text>
 
-        <SegmentedButtons
-          value={transactionType}
-          onValueChange={setTransactionType}
-          buttons={[
-            { value: 'expense', label: 'Despesa' },
-            { value: 'income', label: 'Receita' },
-          ]}
-          style={styles.segmentedButton}
-        />
+          <SegmentedButtons
+            value={transactionType}
+            onValueChange={setTransactionType}
+            buttons={[
+              { value: 'expense', label: 'Despesa' },
+              { value: 'income', label: 'Receita' },
+            ]}
+            style={styles.segmentedButton}
+          />
 
-        <TextInput
-          label="Valor"
-          value={amount}
-          onChangeText={setAmount}
-          keyboardType="numeric"
-          mode="outlined"
-          style={styles.input}
-          left={<TextInput.Affix text="R$" />}
-        />
+          <TextInput
+            label="Valor"
+            value={amount}
+            onChangeText={setAmount}
+            keyboardType="numeric"
+            mode="outlined"
+            style={styles.input}
+            left={<TextInput.Affix text="R$" />}
+          />
 
-        <TextInput
-          label="Descrição"
-          value={description}
-          onChangeText={setDescription}
-          mode="outlined"
-          style={styles.input}
-        />
+          <TextInput
+            label="Descrição"
+            value={description}
+            onChangeText={setDescription}
+            mode="outlined"
+            style={styles.input}
+          />
 
-        <TextInput
-          label="Categoria"
-          value={category}
-          onChangeText={setCategory}
-          mode="outlined"
-          style={styles.input}
-          right={<TextInput.Icon icon="chevron-down" />}
-        />
+          <TextInput
+            label="Categoria"
+            value={category}
+            onChangeText={setCategory}
+            mode="outlined"
+            style={styles.input}
+            right={<TextInput.Icon icon="chevron-down" />}
+          />
 
-        <Button 
-          mode="contained" 
-          onPress={() => {/* Lógica para salvar */}}
-          style={styles.button}
-        >
-          Salvar
-        </Button>
-      </View>
-    </ScrollView>
+          <Button 
+            mode="contained" 
+            onPress={() => {/* Lógica para salvar */}}
+            style={styles.button}
+          >
+            Salvar
+          </Button>
+        </View>
+      </ScrollView>
+    </SafeScreen>
   );
 };
 

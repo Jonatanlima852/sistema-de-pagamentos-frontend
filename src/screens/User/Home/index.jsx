@@ -2,35 +2,38 @@ import React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Text, Card, Surface } from 'react-native-paper';
 import { colors } from '../../../theme';
+import SafeScreen from '../../../components/SafeScreen';
 
 const Home = () => {
   return (
-    <ScrollView style={styles.container}>
-      <Surface style={styles.header} elevation={2}>
-        <Text variant="headlineSmall" style={styles.greeting}>Olá, Usuário</Text>
-        <Text variant="titleMedium" style={styles.balance}>Saldo Total</Text>
-        <Text variant="displaySmall" style={styles.balanceValue}>R$ 5.234,50</Text>
-      </Surface>
+    <SafeScreen>
+      <ScrollView style={styles.container}>
+        <Surface style={styles.header} elevation={2}>
+          <Text variant="headlineSmall" style={styles.greeting}>Olá, Usuário</Text>
+          <Text variant="titleMedium" style={styles.balance}>Saldo Total</Text>
+          <Text variant="displaySmall" style={styles.balanceValue}>R$ 5.234,50</Text>
+        </Surface>
 
-      <View style={styles.summaryContainer}>
-        <Card style={[styles.summaryCard, { backgroundColor: colors.success }]}>
-          <Card.Content>
-            <Text variant="titleMedium" style={styles.cardTitle}>Receitas</Text>
-            <Text variant="titleLarge" style={styles.cardValue}>R$ 7.500,00</Text>
-          </Card.Content>
-        </Card>
+        <View style={styles.summaryContainer}>
+          <Card style={[styles.summaryCard, { backgroundColor: colors.success }]}>
+            <Card.Content>
+              <Text variant="titleMedium" style={styles.cardTitle}>Receitas</Text>
+              <Text variant="titleLarge" style={styles.cardValue}>R$ 7.500,00</Text>
+            </Card.Content>
+          </Card>
 
-        <Card style={[styles.summaryCard, { backgroundColor: colors.error }]}>
-          <Card.Content>
-            <Text variant="titleMedium" style={styles.cardTitle}>Despesas</Text>
-            <Text variant="titleLarge" style={styles.cardValue}>R$ 2.265,50</Text>
-          </Card.Content>
-        </Card>
-      </View>
+          <Card style={[styles.summaryCard, { backgroundColor: colors.error }]}>
+            <Card.Content>
+              <Text variant="titleMedium" style={styles.cardTitle}>Despesas</Text>
+              <Text variant="titleLarge" style={styles.cardValue}>R$ 2.265,50</Text>
+            </Card.Content>
+          </Card>
+        </View>
 
-      <Text variant="titleMedium" style={styles.sectionTitle}>Resumo do Mês</Text>
-      {/* Aqui virão os componentes de resumo */}
-    </ScrollView>
+        <Text variant="titleMedium" style={styles.sectionTitle}>Resumo do Mês</Text>
+        {/* Aqui virão os componentes de resumo */}
+      </ScrollView>
+    </SafeScreen>
   );
 };
 

@@ -2,6 +2,7 @@ import React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { List, Divider } from 'react-native-paper';
 import { colors } from '../../../theme';
+import SafeScreen from '../../../components/SafeScreen';
 
 const Settings = ({ navigation }) => {
   const settingsItems = [
@@ -39,33 +40,35 @@ const Settings = ({ navigation }) => {
   ];
 
   return (
-    <ScrollView style={styles.container}>
-      <List.Section>
-        {settingsItems.map((item, index) => (
-          <React.Fragment key={item.route}>
-            <List.Item
-              title={item.title}
-              left={props => (
-                <List.Icon
-                  {...props}
-                  icon={item.icon}
-                  color={item.color || colors.text}
-                />
-              )}
-              right={props => (
-                <List.Icon {...props} icon="chevron-right" />
-              )}
-              onPress={() => navigation.navigate(item.route)}
-              titleStyle={[
-                styles.itemTitle,
-                item.color && { color: item.color }
-              ]}
-            />
-            {index < settingsItems.length - 1 && <Divider />}
-          </React.Fragment>
-        ))}
-      </List.Section>
-    </ScrollView>
+    <SafeScreen>
+      <ScrollView style={styles.container}>
+        <List.Section>
+          {settingsItems.map((item, index) => (
+            <React.Fragment key={item.route}>
+              <List.Item
+                title={item.title}
+                left={props => (
+                  <List.Icon
+                    {...props}
+                    icon={item.icon}
+                    color={item.color || colors.text}
+                  />
+                )}
+                right={props => (
+                  <List.Icon {...props} icon="chevron-right" />
+                )}
+                onPress={() => navigation.navigate(item.route)}
+                titleStyle={[
+                  styles.itemTitle,
+                  item.color && { color: item.color }
+                ]}
+              />
+              {index < settingsItems.length - 1 && <Divider />}
+            </React.Fragment>
+          ))}
+        </List.Section>
+      </ScrollView>
+    </SafeScreen>
   );
 };
 

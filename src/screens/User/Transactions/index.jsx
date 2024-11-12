@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, FlatList } from 'react-native';
-import { Text, FAB, Modal, Portal, Button, Searchbar, Chip } from 'react-native-paper';
+import { View, StyleSheet, FlatList, Modal } from 'react-native';
+import { Text, Button, Searchbar, Chip } from 'react-native-paper';
 import { colors } from '../../../theme';
+import SafeScreen from '../../../components/SafeScreen';
 
 const TransactionItem = ({ item }) => (
   <View style={styles.transactionItem}>
@@ -30,53 +31,65 @@ const Transactions = () => {
   ];
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Searchbar
-          placeholder="Buscar transação"
-          onChangeText={setSearchQuery}
-          value={searchQuery}
-          style={styles.searchbar}
-        />
-        <Button 
-          icon="filter-variant" 
-          onPress={() => setFilterVisible(true)}
-          mode="contained-tonal"
-        >
-          Filtros
-        </Button>
-      </View>
-
-      <View style={styles.filterChips}>
-        {selectedFilters.map((filter) => (
-          <Chip 
-            key={filter} 
-            onClose={() => {/* Remove filter */}}
-            style={styles.chip}
+    <SafeScreen>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Searchbar
+            placeholder="Buscar transação"
+            onChangeText={setSearchQuery}
+            value={searchQuery}
+            style={styles.searchbar}
+          />
+          <Button 
+            icon="filter-variant" 
+            onPress={() => setFilterVisible(true)}
+            mode="contained-tonal"
           >
-            {filter}
-          </Chip>
-        ))}
-      </View>
+            Filtros
+          </Button>
+        </View>
 
-      <FlatList
-        data={mockTransactions}
-        renderItem={({ item }) => <TransactionItem item={item} />}
-        keyExtractor={item => item.id.toString()}
-        contentContainerStyle={styles.list}
-      />
+        <View style={styles.filterChips}>
+          {selectedFilters.map((filter) => (
+            <Chip 
+              key={filter} 
+              onClose={() => {/* Remove filter */}}
+              style={styles.chip}
+            >
+              {filter}
+            </Chip>
+          ))}
+        </View>
 
-      <Portal>
+        <FlatList
+          data={mockTransactions}
+          renderItem={({ item }) => <TransactionItem item={item} />}
+          keyExtractor={item => item.id.toString()}
+          contentContainerStyle={styles.list}
+        />
+
         <Modal
           visible={filterVisible}
-          onDismiss={() => setFilterVisible(false)}
-          contentContainerStyle={styles.modalContent}
+          onRequestClose={() => setFilterVisible(false)}
+          animationType="slide"
+          transparent={true}
         >
-          <Text variant="titleLarge" style={styles.modalTitle}>Filtros</Text>
-          {/* Conteúdo do modal de filtros */}
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text variant="titleLarge" style={styles.modalTitle}>Filtros</Text>
+              {/* Conteúdo do modal de filtros */}
+              <Button 
+                mode="contained"
+                onPress={() => setFilterVisible(false)}
+                style={styles.closeButton}
+              >
+                Fechar
+              </Button>
+            </View>
+          </View>
         </Modal>
-      </Portal>
-    </View>
+      </View>
+    </SafeScreen>
   );
 };
 
@@ -117,14 +130,23 @@ const styles = StyleSheet.create({
   transactionInfo: {
     flex: 1,
   },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
   modalContent: {
     backgroundColor: 'white',
     padding: 20,
-    margin: 20,
-    borderRadius: 12,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    minHeight: '50%',
   },
   modalTitle: {
     marginBottom: 16,
+  },
+  closeButton: {
+    marginTop: 16,
   },
 });
 
