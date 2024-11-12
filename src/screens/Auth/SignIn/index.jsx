@@ -1,22 +1,82 @@
-import React from "react";
+import React, { useState } from "react";
 import {
     View,
     StyleSheet,
-    Text,
+    TouchableOpacity,
 } from "react-native";
+import { TextInput, Button, Text, Divider } from "react-native-paper";
 
-
-const SignIn = () => {
-
-    console.error('opa')
+const SignIn = ({ navigation }) => {
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [secureTextEntry, setSecureTextEntry] = useState(true);
 
     return (
-        <View>
-            <Text>Oiiiiiiiiiiiiiiiiiiiiiii</Text>
-            <Text>Oiiiiiiiiiiiiiiiiiiiiiii</Text>
-            <Text>Oiiiiiiiiiiiiiiiiiiiiiii</Text>
-            <Text>Oiiiiiiiiiiiiiiiiiiiiiii</Text>
-            <Text>Oiiiiiiiiiiiiiiiiiiiiiii</Text>
+        <View style={styles.container}>
+            <View style={styles.header}>
+                <Text variant="displaySmall" style={styles.title}>Bem-vindo</Text>
+                <Text variant="bodyLarge" style={styles.subtitle}>Faça login para continuar</Text>
+            </View>
+
+            <View style={styles.form}>
+                <TextInput
+                    label="E-mail"
+                    value={email}
+                    onChangeText={setEmail}
+                    mode="outlined"
+                    style={styles.input}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                />
+
+                <TextInput
+                    label="Senha"
+                    value={password}
+                    onChangeText={setPassword}
+                    mode="outlined"
+                    style={styles.input}
+                    secureTextEntry={secureTextEntry}
+                    right={
+                        <TextInput.Icon
+                            icon={secureTextEntry ? "eye-off" : "eye"}
+                            onPress={() => setSecureTextEntry(!secureTextEntry)}
+                        />
+                    }
+                />
+
+                <TouchableOpacity 
+                    onPress={() => {/* Navegação para recuperação de senha */}}
+                    style={styles.forgotPassword}
+                >
+                    <Text variant="bodyMedium" style={styles.forgotPasswordText}>
+                        Esqueceu sua senha?
+                    </Text>
+                </TouchableOpacity>
+
+                <Button
+                    mode="contained"
+                    onPress={() => {/* Lógica de login */}}
+                    style={styles.button}
+                >
+                    Conectar
+                </Button>
+
+                <View style={styles.dividerContainer}>
+                    <Divider style={styles.divider} />
+                    <Text style={styles.orText}>ou</Text>
+                    <Divider style={styles.divider} />
+                </View>
+
+                <TouchableOpacity 
+                    onPress={() => navigation.navigate('SignUp')}
+                    style={styles.registerContainer}
+                >
+                    <Text variant="bodyMedium">Não tem uma conta? </Text>
+                    <Text variant="bodyMedium" style={styles.registerText}>
+                        Registre-se
+                    </Text>
+                </TouchableOpacity>
+            </View>
         </View>
     );
 }
@@ -26,64 +86,55 @@ export default SignIn;
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#f2f2f2",
-        alignItems: "center",
-        justifyContent: "center",
-        paddingHorizontal: 20,
+        backgroundColor: '#fff',
+        padding: 20,
     },
-    logoContainer: {
-        marginBottom: 30,
-        alignItems: "center",
+    header: {
+        marginTop: 60,
+        marginBottom: 40,
     },
-    logo: {
-        width: 150,
-        height: 150,
+    title: {
+        fontWeight: 'bold',
+        marginBottom: 8,
     },
-    formContainer: {
-        width: "100%",
+    subtitle: {
+        color: '#666',
     },
-    inputArea: {
-        marginBottom: 15,
+    form: {
+        flex: 1,
     },
     input: {
-        backgroundColor: "#fff",
-        fontSize: 16,
-        paddingVertical: 12,
-        paddingHorizontal: 15,
-        borderRadius: 8,
-        color: "#333",
-        shadowColor: "#000",
-        shadowOpacity: 0.1,
-        shadowRadius: 5,
-        shadowOffset: { width: 0, height: 2 },
-        elevation: 3, // Sombras para Android
+        marginBottom: 16,
     },
-    submitButton: {
-        backgroundColor: "#3b3dbf",
-        paddingVertical: 15,
-        borderRadius: 8,
-        alignItems: "center",
-        justifyContent: "center",
-        marginTop: 10,
-        shadowColor: "#000",
-        shadowOpacity: 0.2,
-        shadowRadius: 5,
-        shadowOffset: { width: 0, height: 2 },
-        elevation: 5,
+    forgotPassword: {
+        alignSelf: 'flex-end',
+        marginBottom: 24,
     },
-    submitText: {
-        fontSize: 18,
-        color: "#fff",
-        fontWeight: "bold",
+    forgotPasswordText: {
+        color: '#666',
     },
-    link: {
-        marginTop: 20,
-        alignItems: "center",
+    button: {
+        padding: 4,
+        marginBottom: 24,
     },
-    linkText: {
-        color: "#3b3dbf",
-        fontSize: 16,
-        textDecorationLine: "underline",
+    dividerContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 24,
+    },
+    divider: {
+        flex: 1,
+    },
+    orText: {
+        marginHorizontal: 16,
+        color: '#666',
+    },
+    registerContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+    },
+    registerText: {
+        fontWeight: 'bold',
     },
 });
 
