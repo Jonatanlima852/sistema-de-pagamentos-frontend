@@ -17,8 +17,6 @@ import Animated, {
 } from 'react-native-reanimated';
 import { colors } from '../../../theme';
 
-const { width } = Dimensions.get('window');
-
 const SignUp = ({ navigation }) => {
     const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
@@ -177,6 +175,7 @@ const styles = StyleSheet.create({
         padding: 4,
         marginTop: 8,
         marginBottom: 24,
+        color: colors.primary,
     },
     loginContainer: {
         flexDirection: 'row',

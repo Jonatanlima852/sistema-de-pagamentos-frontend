@@ -118,6 +118,7 @@ const styles = StyleSheet.create({
     button: {
         padding: 4,
         marginBottom: 24,
+        color: colors.primary,
     },
     dividerContainer: {
         flexDirection: 'row',
