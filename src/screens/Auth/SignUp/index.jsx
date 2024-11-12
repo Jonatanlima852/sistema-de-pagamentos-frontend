@@ -13,6 +13,7 @@ import Animated, {
     Layout,
     BounceIn
 } from 'react-native-reanimated';
+import { colors } from '../../../theme';
 
 const { width } = Dimensions.get('window');
 
@@ -150,7 +151,7 @@ const styles = StyleSheet.create({
         marginBottom: 8,
     },
     subtitle: {
-        color: '#666',
+        color: colors.textLight,
     },
     form: {
         flex: 1,

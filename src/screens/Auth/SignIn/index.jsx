@@ -5,6 +5,7 @@ import {
     TouchableOpacity,
 } from "react-native";
 import { TextInput, Button, Text, Divider } from "react-native-paper";
+import { colors } from '../../../theme';
 
 const SignIn = ({ navigation }) => {
     const [email, setEmail] = useState("");
@@ -98,7 +99,7 @@ const styles = StyleSheet.create({
         marginBottom: 8,
     },
     subtitle: {
-        color: '#666',
+        color: colors.textLight,
     },
     form: {
         flex: 1,
@@ -111,7 +112,7 @@ const styles = StyleSheet.create({
         marginBottom: 24,
     },
     forgotPasswordText: {
-        color: '#666',
+        color: colors.textLight,
     },
     button: {
         padding: 4,
@@ -127,7 +128,7 @@ const styles = StyleSheet.create({
     },
     orText: {
         marginHorizontal: 16,
-        color: '#666',
+        color: colors.textLight,
     },
     registerContainer: {
         flexDirection: 'row',
