@@ -1,7 +1,7 @@
-import UserStack from './UserStack';
+import UserTabs from './UserTabs';
 
 const AppStack = () => {
-    return <UserStack />
-}
+    return <UserTabs />;
+};
 
 export default AppStack;
