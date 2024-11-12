@@ -12,7 +12,7 @@ const colors = {
     error: '#D32F2F',
     warning: '#FFA000',
     disabled: '#90A4AE',
-} as const;
+};
 
 const theme = {
     ...MD3LightTheme,
