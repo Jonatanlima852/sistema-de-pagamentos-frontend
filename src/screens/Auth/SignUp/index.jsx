@@ -16,8 +16,10 @@ import Animated, {
     BounceIn
 } from 'react-native-reanimated';
 import { colors } from '../../../theme';
+import { useAuth } from '../../../hooks/useAuth';
 
 const SignUp = ({ navigation }) => {
+    const { signUp } = useAuth();
     const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -25,6 +27,7 @@ const SignUp = ({ navigation }) => {
     const [secureTextEntry, setSecureTextEntry] = useState(true);
     const [secureConfirmTextEntry, setSecureConfirmTextEntry] = useState(true);
 
+<<<<<<< HEAD
     const [error, setError] = useState(""); // Alteração: Adicionado estado para mensagem de erro
 
     // Função para validar senhas ao pressionar o botão
@@ -34,6 +37,19 @@ const SignUp = ({ navigation }) => {
         } else {
             setError(""); // Limpa a mensagem de erro se as senhas forem iguais
             console.log("Usuário registrado com sucesso!"); // Adicione a lógica de registro aqui
+=======
+    const handleSignUp = async () => {
+        if (password !== confirmPassword) {
+            // Mostrar erro ao usuário
+            return;
+        }
+
+        try {
+            await signUp(username, email, password);
+        } catch (error) {
+            // Tratar erro (mostrar mensagem ao usuário)
+            console.error(error);
+>>>>>>> e248514be2557a57ef0d1730726453aefc3f6829
         }
     };
 
@@ -135,7 +151,11 @@ const SignUp = ({ navigation }) => {
                     >
                         <Button
                             mode="contained"
+<<<<<<< HEAD
                             onPress={handleSignUp} // Alteração: Lógica de validação ao pressionar o botão
+=======
+                            onPress={handleSignUp}
+>>>>>>> e248514be2557a57ef0d1730726453aefc3f6829
                             style={styles.button}
                         >
                             Criar Conta

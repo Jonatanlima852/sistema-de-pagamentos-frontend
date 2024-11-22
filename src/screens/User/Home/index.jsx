@@ -5,11 +5,13 @@ import { colors } from '../../../theme';
 import SafeScreen from '../../../components/SafeScreen';
 
 const Home = () => {
+  const usuario = 'petismo'
+  
   return (
     <SafeScreen>
       <ScrollView style={styles.container}>
         <Surface style={styles.header} elevation={2}>
-          <Text variant="headlineSmall" style={styles.greeting}>Olá, Usuário</Text>
+          <Text variant="headlineSmall" style={styles.greeting}>Olá, {usuario}</Text>
           <Text variant="titleMedium" style={styles.balance}>Saldo Total</Text>
           <Text variant="displaySmall" style={styles.balanceValue}>R$ 5.234,50</Text>
         </Surface>
