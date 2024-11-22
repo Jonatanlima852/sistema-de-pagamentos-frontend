@@ -9,13 +9,9 @@ const Router = () => {
       return null; // ou um componente de loading
     }
 
-<<<<<<< HEAD
     return (
       authData == '' ? <AuthStack /> : <AppStack />
     );
-=======
-    return authData ? <AppStack /> : <AuthStack />;
->>>>>>> e248514be2557a57ef0d1730726453aefc3f6829
 };
 
 export default Router;

@@ -27,20 +27,12 @@ const SignUp = ({ navigation }) => {
     const [secureTextEntry, setSecureTextEntry] = useState(true);
     const [secureConfirmTextEntry, setSecureConfirmTextEntry] = useState(true);
 
-<<<<<<< HEAD
     const [error, setError] = useState(""); // Alteração: Adicionado estado para mensagem de erro
 
-    // Função para validar senhas ao pressionar o botão
-    const handleSignUp = () => {
-        if (password !== confirmPassword) {
-            setError("As senhas não correspondem");
-        } else {
-            setError(""); // Limpa a mensagem de erro se as senhas forem iguais
-            console.log("Usuário registrado com sucesso!"); // Adicione a lógica de registro aqui
-=======
     const handleSignUp = async () => {
         if (password !== confirmPassword) {
             // Mostrar erro ao usuário
+            setError("As senhas não correspondem");
             return;
         }
 
@@ -49,7 +41,6 @@ const SignUp = ({ navigation }) => {
         } catch (error) {
             // Tratar erro (mostrar mensagem ao usuário)
             console.error(error);
->>>>>>> e248514be2557a57ef0d1730726453aefc3f6829
         }
     };
 
@@ -151,11 +142,7 @@ const SignUp = ({ navigation }) => {
                     >
                         <Button
                             mode="contained"
-<<<<<<< HEAD
-                            onPress={handleSignUp} // Alteração: Lógica de validação ao pressionar o botão
-=======
                             onPress={handleSignUp}
->>>>>>> e248514be2557a57ef0d1730726453aefc3f6829
                             style={styles.button}
                         >
                             Criar Conta
