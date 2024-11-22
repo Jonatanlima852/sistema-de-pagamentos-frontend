@@ -1,14 +1,15 @@
+import { useAuth } from '../hooks/useAuth';
 import AppStack from './AppStack';
 import AuthStack from './AuthStack';
 
-
 const Router = () => {
+    const { authData, loading } = useAuth();
 
-    const authData = ''
+    if (loading) {
+      return null; // ou um componente de loading
+    }
 
-    return (
-      authData == 'hjkh' ? <AuthStack /> : <AppStack />
-    );
+    return authData ? <AppStack /> : <AuthStack />;
 };
 
 export default Router;

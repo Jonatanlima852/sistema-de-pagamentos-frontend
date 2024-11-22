@@ -16,14 +16,30 @@ import Animated, {
     BounceIn
 } from 'react-native-reanimated';
 import { colors } from '../../../theme';
+import { useAuth } from '../../../hooks/useAuth';
 
 const SignUp = ({ navigation }) => {
+    const { signUp } = useAuth();
     const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [secureTextEntry, setSecureTextEntry] = useState(true);
     const [secureConfirmTextEntry, setSecureConfirmTextEntry] = useState(true);
+
+    const handleSignUp = async () => {
+        if (password !== confirmPassword) {
+            // Mostrar erro ao usuário
+            return;
+        }
+
+        try {
+            await signUp(username, email, password);
+        } catch (error) {
+            // Tratar erro (mostrar mensagem ao usuário)
+            console.error(error);
+        }
+    };
 
     return (
         <KeyboardAvoidingView 
@@ -116,7 +132,7 @@ const SignUp = ({ navigation }) => {
                     >
                         <Button
                             mode="contained"
-                            onPress={() => {/* Lógica de registro */}}
+                            onPress={handleSignUp}
                             style={styles.button}
                         >
                             Criar Conta

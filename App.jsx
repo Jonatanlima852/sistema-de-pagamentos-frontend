@@ -56,7 +56,9 @@ export default function App() {
   return (
     <PaperProvider theme={theme}>
       <NavigationContainer onReady={onLayoutRootView}>
-        <Routes />
+        <AuthProvider>
+          <Routes />
+        </AuthProvider>
       </NavigationContainer>
     </PaperProvider>
   );

@@ -6,11 +6,21 @@ import {
 } from "react-native";
 import { TextInput, Button, Text, Divider } from "react-native-paper";
 import { colors } from '../../../theme';
+import { useAuth } from '../../../hooks/useAuth';
 
 const SignIn = ({ navigation }) => {
+    const { signIn } = useAuth();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [secureTextEntry, setSecureTextEntry] = useState(true);
+
+    const handleSignIn = async () => {
+        try {
+            await signIn(email, password);
+        } catch (error) {
+            console.error(error);
+        }
+    };
 
     return (
         <View style={styles.container}>
@@ -56,7 +66,7 @@ const SignIn = ({ navigation }) => {
 
                 <Button
                     mode="contained"
-                    onPress={() => {/* Lógica de login */}}
+                    onPress={handleSignIn}
                     style={styles.button}
                 >
                     Conectar
