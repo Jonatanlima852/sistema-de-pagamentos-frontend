@@ -27,11 +27,10 @@ const SignUp = ({ navigation }) => {
     const [secureTextEntry, setSecureTextEntry] = useState(true);
     const [secureConfirmTextEntry, setSecureConfirmTextEntry] = useState(true);
 
-    const [error, setError] = useState(""); // Alteração: Adicionado estado para mensagem de erro
+    const [error, setError] = useState("");
 
     const handleSignUp = async () => {
         if (password !== confirmPassword) {
-            // Mostrar erro ao usuário
             setError("As senhas não correspondem");
             return;
         }
@@ -39,7 +38,6 @@ const SignUp = ({ navigation }) => {
         try {
             await signUp(username, email, password);
         } catch (error) {
-            // Tratar erro (mostrar mensagem ao usuário)
             console.error(error);
         }
     };
@@ -129,7 +127,6 @@ const SignUp = ({ navigation }) => {
                         />
                     </Animated.View>
 
-                    {/* Alteração: Exibição de mensagem de erro estilizada */}
                     {error ? (
                         <View style={styles.errorContainer}>
                             <Text style={styles.errorText}>{error}</Text>
@@ -215,8 +212,8 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
     errorContainer: {
-        backgroundColor: '#ffe6e6', // Fundo vermelho claro
-        borderColor: '#ff4d4d', // Borda vermelha
+        backgroundColor: '#ffe6e6',
+        borderColor: '#ff4d4d',
         borderWidth: 1,
         borderRadius: 8,
         padding: 10,

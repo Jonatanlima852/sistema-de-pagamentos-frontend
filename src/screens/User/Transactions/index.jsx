@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, FlatList, Modal } from 'react-native';
 import { Text, Button, Searchbar, Chip } from 'react-native-paper';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { colors } from '../../../theme';
 import SafeScreen from '../../../components/SafeScreen';
 
@@ -23,6 +24,9 @@ const Transactions = () => {
   const [filterVisible, setFilterVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilters, setSelectedFilters] = useState([]);
+  const [startDate, setStartDate] = useState(null); // Data de Início
+  const [endDate, setEndDate] = useState(null); // Data Final
+  const [showDatePicker, setShowDatePicker] = useState(null); // Gerencia qual seletor de data é exibido
 
   const mockTransactions = [
     { id: 1, description: 'Salário', amount: '5000,00', type: 'income', date: '01/03/2024' },
@@ -68,6 +72,7 @@ const Transactions = () => {
           contentContainerStyle={styles.list}
         />
 
+        {/* Modal de Filtros */}
         <Modal
           visible={filterVisible}
           onRequestClose={() => setFilterVisible(false)}
@@ -77,9 +82,63 @@ const Transactions = () => {
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
               <Text variant="titleLarge" style={styles.modalTitle}>Filtros</Text>
-              {/* Conteúdo do modal de filtros */}
+
+              {/* Botão para abrir o seletor de Data de Início */}
+              <Button
+                mode="outlined"
+                onPress={() => setShowDatePicker('start')}
+                style={styles.dateButton}
+              >
+                {startDate
+                  ? `Início: ${startDate.toLocaleDateString()}`
+                  : 'Selecionar Data de Início'}
+              </Button>
+
+              {/* Botão para abrir o seletor de Data Final */}
+              <Button
+                mode="outlined"
+                onPress={() => setShowDatePicker('end')}
+                style={styles.dateButton}
+              >
+                {endDate
+                  ? `Fim: ${endDate.toLocaleDateString()}`
+                  : 'Selecionar Data Final'}
+              </Button>
+
+              {/* Exibe o DateTimePicker */}
+              {showDatePicker && (
+                <DateTimePicker
+                  value={
+                    showDatePicker === 'start'
+                      ? startDate || new Date()
+                      : endDate || new Date()
+                  }
+                  mode="date"
+                  display="calendar"
+                  onChange={(event, selectedDate) => {
+                    if (selectedDate) {
+                      if (showDatePicker === 'start') setStartDate(selectedDate);
+                      if (showDatePicker === 'end') setEndDate(selectedDate);
+                    }
+                    setShowDatePicker(null); // Fecha o seletor
+                  }}
+                />
+              )}
+
               <Button 
                 mode="contained"
+                onPress={() => {
+                  // Fechar o modal e aplicar os filtros (implementação futura)
+                  setFilterVisible(false);
+                  console.log('Filtro aplicado:', { startDate, endDate });
+                }}
+                style={styles.applyButton}
+              >
+                Aplicar
+              </Button>
+
+              <Button 
+                mode="outlined"
                 onPress={() => setFilterVisible(false)}
                 style={styles.closeButton}
               >
@@ -140,14 +199,21 @@ const styles = StyleSheet.create({
     padding: 20,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    minHeight: '50%',
+    minHeight: '90%',
   },
   modalTitle: {
     marginBottom: 16,
   },
+  dateButton: {
+    marginBottom: 16,
+  },
+  applyButton: {
+    backgroundColor: colors.primary,
+    marginBottom: 16,
+  },
   closeButton: {
-    marginTop: 16,
+    marginBottom: 16,
   },
 });
 
-export default Transactions; 
+export default Transactions;
