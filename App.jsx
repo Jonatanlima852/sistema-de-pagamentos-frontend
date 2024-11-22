@@ -6,6 +6,8 @@ import theme from './src/theme';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { useCallback } from 'react';
+import { AuthProvider } from './src/contexts/AuthContext';
+
 import {
   MaterialCommunityIcons,
   AntDesign,
