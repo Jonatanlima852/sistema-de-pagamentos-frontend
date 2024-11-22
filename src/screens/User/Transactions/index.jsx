@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, FlatList, Modal } from 'react-native';
-import { Text, Button, Searchbar, Chip } from 'react-native-paper';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import { Text, Button, Searchbar, Chip, SegmentedButtons } from 'react-native-paper';
 import { colors } from '../../../theme';
 import SafeScreen from '../../../components/SafeScreen';
 
@@ -22,16 +21,17 @@ const TransactionItem = ({ item }) => (
 
 const Transactions = () => {
   const [filterVisible, setFilterVisible] = useState(false);
+  const [activeSubTab, setActiveSubTab] = useState('details'); // Estado para subabas
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilters, setSelectedFilters] = useState([]);
   const [startDate, setStartDate] = useState(null); // Data de Início
   const [endDate, setEndDate] = useState(null); // Data Final
   const [showDatePicker, setShowDatePicker] = useState(null); // Gerencia qual seletor de data é exibido
+  const [categories, setCategories] = useState([]); // Categorias selecionadas
 
   const mockTransactions = [
     { id: 1, description: 'Salário', amount: '5000,00', type: 'income', date: '01/03/2024' },
     { id: 2, description: 'Aluguel', amount: '1500,00', type: 'expense', date: '05/03/2024' },
-    // Adicione mais itens mock aqui
   ];
 
   return (
@@ -83,54 +83,74 @@ const Transactions = () => {
             <View style={styles.modalContent}>
               <Text variant="titleLarge" style={styles.modalTitle}>Filtros</Text>
 
-              {/* Botão para abrir o seletor de Data de Início */}
-              <Button
-                mode="outlined"
-                onPress={() => setShowDatePicker('start')}
-                style={styles.dateButton}
-              >
-                {startDate
-                  ? `Início: ${startDate.toLocaleDateString()}`
-                  : 'Selecionar Data de Início'}
-              </Button>
+              {/* ALTERAÇÃO FEITA: Adicionando Subabas */}
+              <SegmentedButtons
+                value={activeSubTab}
+                onValueChange={setActiveSubTab}
+                buttons={[
+                  { value: 'details', label: 'Detalhes' },
+                  { value: 'categories', label: 'Categorias' },
+                ]}
+                style={styles.segmentedButtons}
+              />
 
-              {/* Botão para abrir o seletor de Data Final */}
-              <Button
-                mode="outlined"
-                onPress={() => setShowDatePicker('end')}
-                style={styles.dateButton}
-              >
-                {endDate
-                  ? `Fim: ${endDate.toLocaleDateString()}`
-                  : 'Selecionar Data Final'}
-              </Button>
+              {/* Conteúdo da Subaba "Detalhes" */}
+              {activeSubTab === 'details' && (
+                <View>
+                  {/* Data */}
+                  <Text style={styles.sectionLabel}>Data</Text>
+                  <Button
+                    mode="outlined"
+                    onPress={() => setShowDatePicker('start')}
+                    style={styles.dateButton}
+                  >
+                    {startDate
+                      ? `Início: ${startDate.toLocaleDateString()}`
+                      : 'Selecionar Data de Início'}
+                  </Button>
 
-              {/* Exibe o DateTimePicker */}
-              {showDatePicker && (
-                <DateTimePicker
-                  value={
-                    showDatePicker === 'start'
-                      ? startDate || new Date()
-                      : endDate || new Date()
-                  }
-                  mode="date"
-                  display="calendar"
-                  onChange={(event, selectedDate) => {
-                    if (selectedDate) {
-                      if (showDatePicker === 'start') setStartDate(selectedDate);
-                      if (showDatePicker === 'end') setEndDate(selectedDate);
-                    }
-                    setShowDatePicker(null); // Fecha o seletor
-                  }}
-                />
+                  <Button
+                    mode="outlined"
+                    onPress={() => setShowDatePicker('end')}
+                    style={styles.dateButton}
+                  >
+                    {endDate
+                      ? `Fim: ${endDate.toLocaleDateString()}`
+                      : 'Selecionar Data Final'}
+                  </Button>
+                </View>
+              )}
+
+              {/* Conteúdo da Subaba "Categorias" */}
+              {activeSubTab === 'categories' && (
+                <View>
+                  <Text style={styles.sectionLabel}>Categorias</Text>
+                  {['Salário', 'Aluguel'].map((category) => (
+                    <Chip
+                      key={category}
+                      selected={categories.includes(category)}
+                      onPress={() => {
+                        if (categories.includes(category)) {
+                          setCategories(categories.filter((cat) => cat !== category));
+                        } else {
+                          setCategories([...categories, category]);
+                        }
+                      }}
+                      style={[styles.chip, categories.includes(category) ? styles.selectedChip : styles.unselectedChip]}
+                      textStyle={styles.chipText}
+                    >
+                      {category}
+                    </Chip>
+                  ))}
+                </View>
               )}
 
               <Button 
                 mode="contained"
                 onPress={() => {
-                  // Fechar o modal e aplicar os filtros (implementação futura)
+                  // Fechar o modal e aplicar os filtros
+                  console.log('Filtros aplicados:', { startDate, endDate, categories });
                   setFilterVisible(false);
-                  console.log('Filtro aplicado:', { startDate, endDate });
                 }}
                 style={styles.applyButton}
               >
@@ -173,7 +193,21 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   chip: {
-    marginRight: 8,
+    marginBottom: 4,
+    paddingVertical: 6,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+  },
+  selectedChip: {
+    backgroundColor: '#D1C4E9',
+  },
+  unselectedChip: {
+    backgroundColor: '#EDE7F6',
+  },
+  chipText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#4A148C',
   },
   list: {
     padding: 16,
@@ -199,10 +233,17 @@ const styles = StyleSheet.create({
     padding: 20,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    minHeight: '90%',
+    minHeight: '70%',
   },
   modalTitle: {
     marginBottom: 16,
+  },
+  segmentedButtons: {
+    marginBottom: 16,
+  },
+  sectionLabel: {
+    marginBottom: 8,
+    fontWeight: 'bold',
   },
   dateButton: {
     marginBottom: 16,
