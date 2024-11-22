@@ -3,8 +3,19 @@ import { View, StyleSheet, ScrollView } from 'react-native';
 import { List, Divider } from 'react-native-paper';
 import { colors } from '../../../theme';
 import SafeScreen from '../../../components/SafeScreen';
+import { useAuth } from '../../../hooks/useAuth';
 
 const Settings = ({ navigation }) => {
+  const { signOut } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error);
+    }
+  };
+
   const settingsItems = [
     {
       title: 'Editar Perfil',
@@ -15,11 +26,6 @@ const Settings = ({ navigation }) => {
       title: 'Minhas Categorias',
       icon: 'tag-multiple',
       route: 'Categories',
-    },
-    {
-      title: 'Minhas Metas',
-      icon: 'flag',
-      route: 'Goals',
     },
     {
       title: 'Meus Limites',
@@ -34,7 +40,7 @@ const Settings = ({ navigation }) => {
     {
       title: 'Sair da Conta',
       icon: 'logout',
-      route: 'Logout',
+      onPress: handleLogout,
       color: colors.error,
     },
   ];
@@ -44,7 +50,7 @@ const Settings = ({ navigation }) => {
       <ScrollView style={styles.container}>
         <List.Section>
           {settingsItems.map((item, index) => (
-            <React.Fragment key={item.route}>
+            <React.Fragment key={item.route || item.title}>
               <List.Item
                 title={item.title}
                 left={props => (
@@ -55,9 +61,9 @@ const Settings = ({ navigation }) => {
                   />
                 )}
                 right={props => (
-                  <List.Icon {...props} icon="chevron-right" />
+                  item.route && <List.Icon {...props} icon="chevron-right" />
                 )}
-                onPress={() => navigation.navigate(item.route)}
+                onPress={item.onPress || (() => navigation.navigate(item.route))}
                 titleStyle={[
                   styles.itemTitle,
                   item.color && { color: item.color }
