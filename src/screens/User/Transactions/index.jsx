@@ -1,38 +1,90 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, FlatList, Modal } from 'react-native';
+import { View, StyleSheet, FlatList, Modal, ActivityIndicator } from 'react-native';
 import { Text, Button, Searchbar, Chip, SegmentedButtons } from 'react-native-paper';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { colors } from '../../../theme';
 import SafeScreen from '../../../components/SafeScreen';
-
-const TransactionItem = ({ item }) => (
-  <View style={styles.transactionItem}>
-    <View style={styles.transactionInfo}>
-      <Text variant="titleMedium">{item.description}</Text>
-      <Text variant="bodyMedium" style={{ color: colors.textLight }}>{item.date}</Text>
-    </View>
-    <Text 
-      variant="titleMedium" 
-      style={{ color: item.type === 'income' ? colors.success : colors.error }}
-    >
-      R$ {item.amount}
-    </Text>
-  </View>
-);
+import { useFinances } from '../../../hooks/useFinances';
+import TransactionItem from './TransactionItem';
 
 const Transactions = () => {
+  const { 
+    transactions, 
+    loading, 
+    loadTransactions,
+    categories,
+    filters,
+    updateFilters,
+    pagination 
+  } = useFinances();
+
   const [filterVisible, setFilterVisible] = useState(false);
-  const [activeSubTab, setActiveSubTab] = useState('details'); // Estado para subabas
+  const [activeSubTab, setActiveSubTab] = useState('details');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilters, setSelectedFilters] = useState([]);
-  const [startDate, setStartDate] = useState(null); // Data de Início
-  const [endDate, setEndDate] = useState(null); // Data Final
-  const [showDatePicker, setShowDatePicker] = useState(null); // Gerencia qual seletor de data é exibido
-  const [categories, setCategories] = useState([]); // Categorias selecionadas
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
+  const [showDatePicker, setShowDatePicker] = useState(null);
+  const [selectedCategories, setSelectedCategories] = useState([]);
 
-  const mockTransactions = [
-    { id: 1, description: 'Salário', amount: '5000,00', type: 'income', date: '01/03/2024' },
-    { id: 2, description: 'Aluguel', amount: '1500,00', type: 'expense', date: '05/03/2024' },
-  ];
+  // Carregar mais transações quando chegar ao fim da lista
+  const handleLoadMore = () => {
+    if (!loading && pagination.hasMore) {
+      loadTransactions();
+    }
+  };
+
+  // Função para lidar com a seleção de data
+  const handleDateChange = (event, selectedDate) => {
+    if (event.type === 'dismissed') {
+      setShowDatePicker(null);
+      return;
+    }
+
+    if (selectedDate) {
+      if (showDatePicker === 'start') {
+        setStartDate(selectedDate);
+      } else {
+        setEndDate(selectedDate);
+      }
+    }
+    setShowDatePicker(null);
+  };
+
+  // Aplicar filtros
+  const handleApplyFilters = () => {
+    const newFilters = {
+      ...filters,
+      startDate: startDate?.toISOString(),
+      endDate: endDate?.toISOString(),
+      categoryIds: selectedCategories,
+    };
+    console.log('Filtros aplicados:', { startDate, endDate, categories });
+    updateFilters(newFilters);
+    setFilterVisible(false);
+  };
+
+  // Limpar filtros
+  const handleClearFilters = () => {
+    setStartDate(null);
+    setEndDate(null);
+    setSelectedCategories([]);
+    updateFilters({
+      startDate: null,
+      endDate: null,
+      categoryIds: [],
+    });
+  };
+
+  if (loading && transactions.length === 0) {
+    return (
+      <SafeScreen>
+        <View style={[styles.container, styles.centerContent]}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      </SafeScreen>
+    );
+  }
 
   return (
     <SafeScreen>
@@ -57,7 +109,11 @@ const Transactions = () => {
           {selectedFilters.map((filter) => (
             <Chip 
               key={filter} 
-              onClose={() => {/* Remove filter */}}
+              onClose={() => {
+                setSelectedFilters(current => 
+                  current.filter(f => f !== filter)
+                );
+              }}
               style={styles.chip}
             >
               {filter}
@@ -66,10 +122,22 @@ const Transactions = () => {
         </View>
 
         <FlatList
-          data={mockTransactions}
+          data={transactions}
           renderItem={({ item }) => <TransactionItem item={item} />}
           keyExtractor={item => item.id.toString()}
           contentContainerStyle={styles.list}
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.1}
+          ListEmptyComponent={() => (
+            <View style={styles.emptyContainer}>
+              <Text>Nenhuma transação encontrada</Text>
+            </View>
+          )}
+          ListFooterComponent={() => (
+            loading && transactions.length > 0 ? (
+              <ActivityIndicator color={colors.primary} style={styles.loader} />
+            ) : null
+          )}
         />
 
         {/* Modal de Filtros */}
@@ -83,7 +151,6 @@ const Transactions = () => {
             <View style={styles.modalContent}>
               <Text variant="titleLarge" style={styles.modalTitle}>Filtros</Text>
 
-              {/* ALTERAÇÃO FEITA: Adicionando Subabas */}
               <SegmentedButtons
                 value={activeSubTab}
                 onValueChange={setActiveSubTab}
@@ -94,19 +161,17 @@ const Transactions = () => {
                 style={styles.segmentedButtons}
               />
 
-              {/* Conteúdo da Subaba "Detalhes" */}
               {activeSubTab === 'details' && (
                 <View>
-                  {/* Data */}
-                  <Text style={styles.sectionLabel}>Data</Text>
+                  <Text style={styles.sectionLabel}>Período</Text>
                   <Button
                     mode="outlined"
                     onPress={() => setShowDatePicker('start')}
                     style={styles.dateButton}
                   >
                     {startDate
-                      ? `Início: ${startDate.toLocaleDateString()}`
-                      : 'Selecionar Data de Início'}
+                      ? `Início: ${startDate.toLocaleDateString('pt-BR')}`
+                      : 'Selecionar Data Inicial'}
                   </Button>
 
                   <Button
@@ -115,55 +180,75 @@ const Transactions = () => {
                     style={styles.dateButton}
                   >
                     {endDate
-                      ? `Fim: ${endDate.toLocaleDateString()}`
+                      ? `Fim: ${endDate.toLocaleDateString('pt-BR')}`
                       : 'Selecionar Data Final'}
                   </Button>
                 </View>
               )}
 
-              {/* Conteúdo da Subaba "Categorias" */}
               {activeSubTab === 'categories' && (
                 <View>
                   <Text style={styles.sectionLabel}>Categorias</Text>
-                  {['Salário', 'Aluguel'].map((category) => (
+                  {categories.map((category) => (
                     <Chip
-                      key={category}
-                      selected={categories.includes(category)}
+                      key={category.id}
+                      selected={selectedCategories.includes(category.id)}
                       onPress={() => {
-                        if (categories.includes(category)) {
-                          setCategories(categories.filter((cat) => cat !== category));
-                        } else {
-                          setCategories([...categories, category]);
-                        }
+                        setSelectedCategories(current => 
+                          current.includes(category.id)
+                            ? current.filter(id => id !== category.id)
+                            : [...current, category.id]
+                        );
                       }}
-                      style={[styles.chip, categories.includes(category) ? styles.selectedChip : styles.unselectedChip]}
-                      textStyle={styles.chipText}
+                      style={[
+                        styles.chip,
+                        selectedCategories.includes(category.id) 
+                          ? styles.selectedChip 
+                          : styles.unselectedChip
+                      ]}
                     >
-                      {category}
+                      {category.name}
                     </Chip>
                   ))}
                 </View>
               )}
 
-              <Button 
-                mode="contained"
-                onPress={() => {
-                  // Fechar o modal e aplicar os filtros
-                  console.log('Filtros aplicados:', { startDate, endDate, categories });
-                  setFilterVisible(false);
-                }}
-                style={styles.applyButton}
-              >
-                Aplicar
-              </Button>
+              {showDatePicker && (
+                <DateTimePicker
+                  value={showDatePicker === 'start' ? (startDate || new Date()) : (endDate || new Date())}
+                  mode="date"
+                  display="default"
+                  onChange={handleDateChange}
+                  maximumDate={showDatePicker === 'start' ? endDate : new Date()}
+                  minimumDate={showDatePicker === 'end' ? startDate : undefined}
+                />
+              )}
 
-              <Button 
-                mode="outlined"
-                onPress={() => setFilterVisible(false)}
-                style={styles.closeButton}
-              >
-                Fechar
-              </Button>
+              <View style={styles.modalButtons}>
+                <Button 
+                  mode="contained"
+                  onPress={handleApplyFilters}
+                  style={styles.applyButton}
+                >
+                  Aplicar Filtros
+                </Button>
+
+                <Button 
+                  mode="outlined"
+                  onPress={handleClearFilters}
+                  style={styles.clearButton}
+                >
+                  Limpar Filtros
+                </Button>
+
+                <Button 
+                  mode="text"
+                  onPress={() => setFilterVisible(false)}
+                  style={styles.closeButton}
+                >
+                  Fechar
+                </Button>
+              </View>
             </View>
           </View>
         </Modal>
@@ -254,6 +339,33 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     marginBottom: 16,
+  },
+  centerContent: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyContainer: {
+    padding: 16,
+    alignItems: 'center',
+  },
+  loader: {
+    padding: 16,
+  },
+  modalButtons: {
+    gap: 8,
+    marginTop: 16,
+  },
+  applyButton: {
+    marginBottom: 8,
+  },
+  clearButton: {
+    marginBottom: 8,
+  },
+  closeButton: {
+    marginBottom: 8,
+  },
+  dateButton: {
+    marginBottom: 8,
   },
 });
 
