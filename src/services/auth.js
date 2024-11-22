@@ -1,8 +1,21 @@
 import axios from 'axios';
+import { REACT_APP_API_URL } from '@env';
+import Constants from 'expo-constants';
+
+const getBaseUrl = () => {
+  // Se estiver no Expo Go
+  if (Constants.appOwnership === 'expo') {
+    return REACT_APP_API_URL;
+  }
+  return REACT_APP_API_URL || 'http://localhost:3000';
+};
 
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:3000',
+  baseURL: getBaseUrl(),
 });
+
+// Para debug
+console.log('API URL:', getBaseUrl());
 
 export const setAuthToken = (token) => {
   if (token) {
@@ -19,6 +32,7 @@ export const authService = {
   },
 
   async login(credentials) {
+    console.log(process.env.REACT_APP_API_URL)
     const response = await api.post('/api/login', credentials);
     setAuthToken(response.data.token);
     return response.data;
