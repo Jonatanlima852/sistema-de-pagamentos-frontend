@@ -10,7 +10,7 @@ const Router = () => {
     }
 
     return (
-      authData == '' ? <AuthStack /> : <AppStack />
+      authData ? <AuthStack /> : <AppStack />
     );
 };
 
