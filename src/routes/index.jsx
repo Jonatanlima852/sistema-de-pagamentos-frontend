@@ -7,7 +7,7 @@ const Router = () => {
     const authData = ''
 
     return (
-      authData == 'hjkh' ? <AuthStack /> : <AppStack />
+      authData == '' ? <AuthStack /> : <AppStack />
     );
 };
 

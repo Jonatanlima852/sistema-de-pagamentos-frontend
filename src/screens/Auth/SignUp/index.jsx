@@ -25,6 +25,18 @@ const SignUp = ({ navigation }) => {
     const [secureTextEntry, setSecureTextEntry] = useState(true);
     const [secureConfirmTextEntry, setSecureConfirmTextEntry] = useState(true);
 
+    const [error, setError] = useState(""); // Alteração: Adicionado estado para mensagem de erro
+
+    // Função para validar senhas ao pressionar o botão
+    const handleSignUp = () => {
+        if (password !== confirmPassword) {
+            setError("As senhas não correspondem");
+        } else {
+            setError(""); // Limpa a mensagem de erro se as senhas forem iguais
+            console.log("Usuário registrado com sucesso!"); // Adicione a lógica de registro aqui
+        }
+    };
+
     return (
         <KeyboardAvoidingView 
             style={styles.container}
@@ -110,13 +122,20 @@ const SignUp = ({ navigation }) => {
                         />
                     </Animated.View>
 
+                    {/* Alteração: Exibição de mensagem de erro estilizada */}
+                    {error ? (
+                        <View style={styles.errorContainer}>
+                            <Text style={styles.errorText}>{error}</Text>
+                        </View>
+                    ) : null}
+
                     <Animated.View 
                         entering={BounceIn.delay(1000)}
                         layout={Layout.springify()}
                     >
                         <Button
                             mode="contained"
-                            onPress={() => {/* Lógica de registro */}}
+                            onPress={handleSignUp} // Alteração: Lógica de validação ao pressionar o botão
                             style={styles.button}
                         >
                             Criar Conta
@@ -188,5 +207,17 @@ const styles = StyleSheet.create({
     loginText: {
         fontWeight: 'bold',
     },
+    errorContainer: {
+        backgroundColor: '#ffe6e6', // Fundo vermelho claro
+        borderColor: '#ff4d4d', // Borda vermelha
+        borderWidth: 1,
+        borderRadius: 8,
+        padding: 10,
+        marginVertical: 10,
+    },
+    errorText: {
+        color: '#ff1a1a',
+        fontSize: 14,
+        textAlign: 'center',
+    },
 });
-
