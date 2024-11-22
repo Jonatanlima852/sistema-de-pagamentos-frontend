@@ -11,7 +11,7 @@ const Router = () => {
 
     console.log(authData)
     return (
-      authData ? <AuthStack /> : <AppStack />
+      authData ? <AppStack /> : <AuthStack />
     );
 };
 
