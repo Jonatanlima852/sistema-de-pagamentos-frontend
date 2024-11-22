@@ -23,6 +23,7 @@ export const FinancesProvider = ({ children }) => {
 
   // Carregamento inicial de dados essenciais
   useEffect(() => {
+    console.log('Carregando dados iniciais...');
     const loadInitialData = async () => {
       try {
         // Carrega contas e categorias em paralelo pois são independentes
@@ -30,6 +31,9 @@ export const FinancesProvider = ({ children }) => {
           financesService.getAccounts(),
           financesService.getCategories(),
         ]);
+
+        console.log('Contas carregadas:', accountsData);
+        console.log('Categorias carregadas:', categoriesData);
 
         setAccounts(accountsData);
         setCategories(categoriesData);
@@ -112,19 +116,31 @@ export const FinancesProvider = ({ children }) => {
         ...filters,
       };
 
-      const data = await financesService.getTransactions(params);
+      const response = await financesService.getTransactions(params);
       
+      // Garantir que temos um array de transações válido
+      const transactionsData = Array.isArray(response) ? response : 
+                             (response?.data?.transactions || response?.transactions || []);
+      
+      console.log('Transações carregadas:', transactionsData);
+
       setTransactions(current => 
-        reset ? data.transactions : [...current, ...data.transactions]
+        reset ? transactionsData : [...current, ...transactionsData]
       );
+      
+      // Verifica se há mais páginas baseado no tamanho do array recebido
+      const hasMore = Array.isArray(transactionsData) && 
+                     transactionsData.length === pagination.limit;
       
       setPagination(prev => ({
         ...prev,
         page: reset ? 2 : prev.page + 1,
-        hasMore: data.transactions.length === pagination.limit,
+        hasMore,
       }));
     } catch (error) {
       console.error('Erro ao carregar transações:', error);
+      // Em caso de erro, garantir que hasMore seja false para evitar loops
+      setPagination(prev => ({ ...prev, hasMore: false }));
       throw error;
     } finally {
       setLoading(false);
