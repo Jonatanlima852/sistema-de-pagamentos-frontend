@@ -1,4 +1,4 @@
-import { View } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { Text } from 'react-native-paper';
 import { colors } from '../../../theme';
 
@@ -35,5 +35,19 @@ const TransactionItem = ({ item }) => {
       </View>
     );
 };
+
+const styles = StyleSheet.create({
+  transactionItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.surface,
+  },
+  transactionInfo: {
+    flex: 1,
+  },
+});
   
 export default TransactionItem;
