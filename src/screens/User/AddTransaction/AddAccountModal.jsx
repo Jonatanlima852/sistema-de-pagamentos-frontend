@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
-import { View, StyleSheet, Modal, Animated } from 'react-native';
-import { Text, TextInput, Button } from 'react-native-paper';
+import { View, StyleSheet, Modal, Animated, Platform, Pressable } from 'react-native';
+import { Text, TextInput, Button, List } from 'react-native-paper';
 import { colors } from '../../../theme';
 import { useFinances } from '../../../hooks/useFinances';
 import PropTypes from 'prop-types';
@@ -24,6 +24,7 @@ const AddAccountModal = ({ visible, onDismiss, themeColor }) => {
   const [initialBalance, setInitialBalance] = useState('');
   const [error, setError] = useState('');
   const [accountType, setAccountType] = useState('');
+  const [showAccountTypePicker, setShowAccountTypePicker] = useState(false);
 
 
   const handleSubmit = async () => {
@@ -55,6 +56,101 @@ const AddAccountModal = ({ visible, onDismiss, themeColor }) => {
     }
   };
 
+  const renderAccountTypeSelector = () => {
+    if (Platform.OS === 'ios') {
+      return (
+        <View style={styles.pickerWrapper}>
+          <Text style={styles.pickerLabel}>Tipo de Conta</Text>
+          <Pressable
+            onPress={() => setShowAccountTypePicker(true)}
+            style={[
+              styles.pickerButton,
+              { borderColor: themeColor }
+            ]}
+          >
+            <Text style={[styles.pickerButtonText, { color: accountType ? colors.text : colors.placeholder }]}>
+              {accountType ? accountTypes.find(type => type.id === accountType)?.name : 'Selecione um tipo de conta'}
+            </Text>
+          </Pressable>
+
+          <Modal
+            visible={showAccountTypePicker}
+            transparent={true}
+            animationType="slide"
+          >
+            <View style={styles.iosPickerModal}>
+              <View style={styles.iosPickerContainer}>
+                <View style={styles.iosPickerHeader}>
+                  <Button
+                    onPress={() => setShowAccountTypePicker(false)}
+                    textColor={themeColor}
+                  >
+                    Fechar
+                  </Button>
+                </View>
+                {accountTypes.map((type) => (
+                  <List.Item
+                    key={type.id}
+                    title={type.name}
+                    onPress={() => {
+                      setAccountType(type.id);
+                      setShowAccountTypePicker(false);
+                    }}
+                    style={[
+                      styles.iosPickerItem,
+                      accountType === type.id && styles.iosPickerItemSelected
+                    ]}
+                    titleStyle={[
+                      styles.iosPickerItemText,
+                      accountType === type.id && { color: themeColor }
+                    ]}
+                    right={props => 
+                      accountType === type.id && 
+                      <List.Icon {...props} icon="check" color={themeColor} />
+                    }
+                  />
+                ))}
+              </View>
+            </View>
+          </Modal>
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.pickerWrapper}>
+        <Text style={styles.pickerLabel}>Tipo de Conta</Text>
+        <View style={[
+          styles.pickerContainer,
+          { borderColor: themeColor }
+        ]}>
+          <Picker
+            selectedValue={accountType}
+            onValueChange={setAccountType}
+            style={styles.picker}
+            mode="dropdown"
+            dropdownIconColor={themeColor}
+          >
+            <Picker.Item
+              enabled={false}
+              label="Selecione um tipo de conta"
+              value=""
+              color={colors.placeholder}
+            />
+            {accountTypes.map((type) => (
+              <Picker.Item
+                key={type.id}
+                label={type.name}
+                value={type.id}
+                color={themeColor}
+              />
+            ))}
+          </Picker>
+        </View>
+      </View>
+    );
+  };
+
   return (
     <Modal
       visible={visible}
@@ -80,36 +176,7 @@ const AddAccountModal = ({ visible, onDismiss, themeColor }) => {
             activeOutlineColor={themeColor}
           />
 
-          <View style={styles.pickerWrapper}>
-            <Text style={styles.pickerLabel}>Tipo de Conta</Text>
-            <View style={[
-              styles.pickerContainer,
-              { borderColor: themeColor }
-            ]}>
-              <Picker
-                selectedValue={accountType}
-                onValueChange={setAccountType}
-                style={styles.picker}
-                mode="dropdown"
-                dropdownIconColor={themeColor}
-              >
-                <Picker.Item
-                  enabled={false}
-                  label="Selecione uma tipo de conta"
-                  value=""
-                  color={colors.placeholder}
-                />
-                {accountTypes.map((type) => (
-                  <Picker.Item
-                    key={type.id}
-                    label={type.name}
-                    value={type.id.toString()}
-                    color={themeColor}
-                  />
-                ))}
-              </Picker>
-            </View>
-          </View>
+          {renderAccountTypeSelector()}
 
           <TextInput
             label="Saldo Inicial (opcional)"
@@ -212,6 +279,44 @@ const styles = StyleSheet.create({
     height: 54,
     color: colors.text,
     marginLeft: -8,
+  },
+  pickerButton: {
+    borderWidth: 2,
+    borderRadius: 8,
+    height: 54,
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    backgroundColor: colors.background,
+  },
+  pickerButtonText: {
+    fontSize: 16,
+  },
+  iosPickerModal: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  iosPickerContainer: {
+    backgroundColor: colors.background,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '70%',
+  },
+  iosPickerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.outline,
+  },
+  iosPickerItem: {
+    paddingVertical: 12,
+  },
+  iosPickerItemSelected: {
+    backgroundColor: `${colors.primary}10`,
+  },
+  iosPickerItemText: {
+    fontSize: 16,
   },
 });
 

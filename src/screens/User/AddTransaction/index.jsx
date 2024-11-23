@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { View, StyleSheet, ScrollView, Pressable, ActivityIndicator, Animated } from 'react-native';
-import { Text, TextInput, SegmentedButtons } from 'react-native-paper';
+import { View, StyleSheet, ScrollView, Pressable, ActivityIndicator, Animated, Modal, Button, Platform } from 'react-native';
+import { Text, TextInput, SegmentedButtons, List } from 'react-native-paper';
 import { Picker } from '@react-native-picker/picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { colors } from '../../../theme';
@@ -25,6 +25,8 @@ import AddCategoryModal from './AddCategoryModal';
   const [showSuccessAnimation] = useState(new Animated.Value(0));
   const [showAddAccountModal, setShowAddAccountModal] = useState(false);
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
+  const [showAccountPicker, setShowAccountPicker] = useState(false);
+  const [showCategoryPicker, setShowCategoryPicker] = useState(false);
 
 
   useEffect(() => {
@@ -110,6 +112,212 @@ import AddCategoryModal from './AddCategoryModal';
   const handleDismissCategoryModal = useCallback(() => {
     setShowAddCategoryModal(false);
   }, []);
+
+  const renderAccountPicker = () => {
+    if (Platform.OS === 'ios') {
+      return (
+        <View style={styles.pickerWrapper}>
+          <Text style={styles.pickerLabel}>Conta</Text>
+          <Pressable
+            onPress={() => setShowAccountPicker(true)}
+            style={[
+              styles.pickerButton,
+              { borderColor: themeColor }
+            ]}
+          >
+            <Text style={[styles.pickerButtonText, { color: account ? colors.text : colors.placeholder }]}>
+              {account ? accounts.find(acc => acc.id.toString() === account)?.name : 'Selecione uma conta'}
+            </Text>
+          </Pressable>
+
+          <Modal
+            visible={showAccountPicker}
+            transparent={true}
+            animationType="slide"
+          >
+            <View style={styles.iosPickerModal}>
+              <View style={styles.iosPickerContainer}>
+                <View style={styles.iosPickerHeader}>
+                  <Pressable
+                    onPress={() => setShowAccountPicker(false)}
+                    style={({ pressed }) => [
+                      styles.closeButton,
+                      { 
+                        opacity: pressed ? 0.7 : 1,
+                        borderWidth: 1,
+                        borderColor: `${themeColor}50`,
+                        borderRadius: 8,
+                      }
+                    ]}
+                  >
+                    <Text style={[styles.closeButtonText, { color: themeColor }]}>
+                      Fechar
+                    </Text>
+                  </Pressable>
+                </View>
+                {accounts.map((acc) => (
+                  <List.Item
+                    key={acc.id}
+                    title={acc.name}
+                    onPress={() => {
+                      setAccount(acc.id.toString());
+                      setShowAccountPicker(false);
+                    }}
+                    style={[
+                      styles.iosPickerItem,
+                      account === acc.id.toString() && styles.iosPickerItemSelected
+                    ]}
+                    titleStyle={[
+                      styles.iosPickerItemText,
+                      account === acc.id.toString() && { color: themeColor }
+                    ]}
+                    right={props => 
+                      account === acc.id.toString() && 
+                      <List.Icon {...props} icon="check" color={themeColor} />
+                    }
+                  />
+                ))}
+              </View>
+            </View>
+          </Modal>
+        </View>
+      );
+    }
+
+    // Android Picker
+    return (
+      <View style={styles.pickerWrapper}>
+        <Text style={styles.pickerLabel}>Conta</Text>
+        <View style={[styles.pickerContainer, { borderColor: themeColor }]}>
+          <Picker
+            selectedValue={account}
+            onValueChange={setAccount}
+            style={styles.picker}
+            mode="dropdown"
+            dropdownIconColor={themeColor}
+          >
+            <Picker.Item
+              enabled={false}
+              label="Selecione uma conta"
+              value=""
+              color={colors.placeholder}
+            />
+            {accounts.map((acc) => (
+              <Picker.Item
+                key={acc.id}
+                label={acc.name}
+                value={acc.id.toString()}
+                color={themeColor}
+              />
+            ))}
+          </Picker>
+        </View>
+      </View>
+    );
+  };
+
+  const renderCategoryPicker = () => {
+    if (Platform.OS === 'ios') {
+      return (
+        <View style={styles.pickerWrapper}>
+          <Text style={styles.pickerLabel}>Categoria</Text>
+          <Pressable
+            onPress={() => setShowCategoryPicker(true)}
+            style={[
+              styles.pickerButton,
+              { borderColor: themeColor }
+            ]}
+          >
+            <Text style={[styles.pickerButtonText, { color: category ? colors.text : colors.placeholder }]}>
+              {category ? filteredCategories.find(cat => cat.id.toString() === category)?.name : 'Selecione uma categoria'}
+            </Text>
+          </Pressable>
+
+          <Modal
+            visible={showCategoryPicker}
+            transparent={true}
+            animationType="slide"
+          >
+            <View style={styles.iosPickerModal}>
+              <View style={styles.iosPickerContainer}>
+                <View style={styles.iosPickerHeader}>
+                  <Pressable
+                    onPress={() => setShowCategoryPicker(false)}
+                    style={({ pressed }) => [
+                      styles.closeButton,
+                      { 
+                        opacity: pressed ? 0.7 : 1,
+                        borderWidth: 1,
+                        borderColor: `${themeColor}50`,
+                        borderRadius: 8,
+                      }
+                    ]}
+                  >
+                    <Text style={[styles.closeButtonText, { color: themeColor }]}>
+                      Fechar
+                    </Text>
+                  </Pressable>
+                </View>
+                {filteredCategories.map((cat) => (
+                  <List.Item
+                    key={cat.id}
+                    title={cat.name}
+                    onPress={() => {
+                      setCategory(cat.id.toString());
+                      setShowCategoryPicker(false);
+                    }}
+                    style={[
+                      styles.iosPickerItem,
+                      category === cat.id.toString() && styles.iosPickerItemSelected
+                    ]}
+                    titleStyle={[
+                      styles.iosPickerItemText,
+                      category === cat.id.toString() && { color: themeColor }
+                    ]}
+                    right={props => 
+                      category === cat.id.toString() && 
+                      <List.Icon {...props} icon="check" color={themeColor} />
+                    }
+                  />
+                ))}
+              </View>
+            </View>
+          </Modal>
+        </View>
+      );
+    }
+
+    // Android Picker
+    return (
+      <View style={styles.pickerWrapper}>
+        <Text style={styles.pickerLabel}>Categoria</Text>
+        <View style={[styles.pickerContainer, { borderColor: themeColor }]}>
+          <Picker
+            selectedValue={category}
+            onValueChange={setCategory}
+            style={styles.picker}
+            mode="dropdown"
+            dropdownIconColor={themeColor}
+          >
+            <Picker.Item
+              enabled={false}
+              label="Selecione uma categoria"
+              value=""
+              color={colors.placeholder}
+            />
+            {filteredCategories.map((cat) => (
+              <Picker.Item
+                key={cat.id}
+                label={cat.name}
+                value={cat.id.toString()}
+                color={themeColor}
+              />
+            ))}
+          </Picker>
+        </View>
+      </View>
+    );
+  };
 
   return (
     <SafeScreen>
@@ -214,69 +422,8 @@ import AddCategoryModal from './AddCategoryModal';
             )}
           </View>
 
-          <View style={styles.pickerWrapper}>
-            <Text style={styles.pickerLabel}>Conta</Text>
-            <View style={[
-              styles.pickerContainer,
-              { borderColor: themeColor }
-            ]}>
-              <Picker
-                selectedValue={account}
-                onValueChange={setAccount}
-                style={styles.picker}
-                mode="dropdown"
-                dropdownIconColor={themeColor}
-              >
-                <Picker.Item
-                  enabled={false}
-                  label="Selecione uma conta"
-                  value=""
-                  color={colors.placeholder}
-                />
-                {accounts.map((acc) => (
-                  <Picker.Item
-                    key={acc.id}
-                    label={acc.name}
-                    value={acc.id.toString()}
-                    color={themeColor}
-                  />
-                ))}
-              </Picker>
-            </View>
-          </View>
-
-          <View style={styles.pickerWrapper}>
-            <Text style={styles.pickerLabel}>Categoria</Text>
-            <View style={[
-              styles.pickerContainer,
-              { borderColor: themeColor }
-            ]}>
-              <Picker
-                selectedValue={category}
-                onValueChange={setCategory}
-                style={styles.picker}
-                mode="dropdown"
-                dropdownIconColor={themeColor}
-              >
-                <Picker.Item
-                  enabled={false}
-                  label="Selecione uma categoria"
-                  value=""
-                  color={colors.placeholder}
-          />
-                {filteredCategories.map((cat) => (
-                  <Picker.Item
-                    key={cat.id}
-                    label={cat.name}
-                    value={cat.id.toString()}
-                    color={themeColor}
-                  />
-                ))}
-              </Picker>
-            </View>
-          </View>
-
-          
+          {renderAccountPicker()}
+          {renderCategoryPicker()}
 
           <Pressable
             onPress={handleAddTransaction}
@@ -459,6 +606,53 @@ const styles = StyleSheet.create({
     padding: 20,
     margin: 20,
     borderRadius: 8,
+  },
+  pickerButton: {
+    borderWidth: 2,
+    borderRadius: 8,
+    height: 54,
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    backgroundColor: colors.background,
+  },
+  pickerButtonText: {
+    fontSize: 16,
+  },
+  iosPickerModal: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  iosPickerContainer: {
+    backgroundColor: colors.background,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '70%',
+    paddingBottom: 20,
+  },
+  iosPickerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.outline,
+  },
+  iosPickerItem: {
+    paddingVertical: 12,
+  },
+  iosPickerItemSelected: {
+    backgroundColor: `${colors.primary}10`,
+  },
+  iosPickerItemText: {
+    fontSize: 16,
+  },
+  closeButton: {
+    padding: 8,
+    paddingHorizontal: 16,
+  },
+  closeButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
   },
 });
 
