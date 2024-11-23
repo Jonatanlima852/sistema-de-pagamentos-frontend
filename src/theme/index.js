@@ -16,6 +16,7 @@ const colors = {
     expense: '#c0392b', // Vermelho mais escuro
     incomeLight: '#2ecc71', // Verde mais claro para estados hover/disabled
     expenseLight: '#e74c3c', // Vermelho mais claro para estados hover/disabled
+    addAccount: '#005A',
 };
 
 const theme = {

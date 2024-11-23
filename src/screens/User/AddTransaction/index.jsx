@@ -1,6 +1,6 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { View, StyleSheet, ScrollView, Pressable, ActivityIndicator, Animated } from 'react-native';
-import { Text, TextInput, Button, SegmentedButtons, Portal, Modal, IconButton } from 'react-native-paper';
+import { Text, TextInput, SegmentedButtons } from 'react-native-paper';
 import { Picker } from '@react-native-picker/picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { colors } from '../../../theme';
@@ -9,6 +9,8 @@ import { useFinances } from '../../../hooks/useFinances';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { currencyMask } from '../../../utils/masks';
 import Toast from 'react-native-toast-message';
+import AddAccountModal from './AddAccountModal';
+import AddCategoryModal from './AddCategoryModal';
 
 const AddTransaction = () => {
   const { loading, error, categories = [], accounts = [], addTransaction } = useFinances();
@@ -24,9 +26,9 @@ const AddTransaction = () => {
   const [showAddAccountModal, setShowAddAccountModal] = useState(false);
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
 
+
   useEffect(() => {
     setThemeColor(transactionType === 'EXPENSE' ? colors.expense : colors.income);
-    console.log(themeColor);
   }, [transactionType]);
 
   // Filtra categorias por tipo
@@ -99,6 +101,15 @@ const AddTransaction = () => {
       console.error('Erro ao adicionar transação:', err);
     }
   };
+
+  // Memoize os callbacks de dismiss
+  const handleDismissAccountModal = useCallback(() => {
+    setShowAddAccountModal(false);
+  }, []);
+
+  const handleDismissCategoryModal = useCallback(() => {
+    setShowAddCategoryModal(false);
+  }, []);
 
   return (
     <SafeScreen>
@@ -322,40 +333,18 @@ const AddTransaction = () => {
       </ScrollView>
 
       {/* Modais */}
-      <Portal>
-        <Modal
-          visible={showAddAccountModal}
-          onDismiss={() => setShowAddAccountModal(false)}
-          contentContainerStyle={styles.modalContainer}
-        >
-          <Text>Adicionar Nova Conta</Text>
-          {/* Conteúdo do modal de conta */}
-        </Modal>
+      <AddAccountModal
+        visible={showAddAccountModal}
+        onDismiss={handleDismissAccountModal}
+        themeColor={colors.addAccount}
+      />
 
-        <Modal
-          visible={showAddCategoryModal}
-          onDismiss={() => setShowAddCategoryModal(false)}
-          contentContainerStyle={styles.modalContainer}
-        >
-          <Text>Adicionar Nova Categoria</Text>
-          {/* Conteúdo do modal de categoria */}
-        </Modal>
-      </Portal>
-      {/* Modais */}
-      {/* <Portal>
-        <AddAccountModal
-          visible={showAddAccountModal}
-          onDismiss={() => setShowAddAccountModal(false)}
-          themeColor={themeColor}
-        />
-
-        <AddCategoryModal
-          visible={showAddCategoryModal}
-          onDismiss={() => setShowAddCategoryModal(false)}
-          themeColor={themeColor}
-          initialType={transactionType}
-        />
-      </Portal> */}
+      <AddCategoryModal
+        visible={showAddCategoryModal}
+        onDismiss={handleDismissCategoryModal}
+        themeColor={themeColor}
+        initialType={transactionType}
+      />
     </SafeScreen>
   );
 };

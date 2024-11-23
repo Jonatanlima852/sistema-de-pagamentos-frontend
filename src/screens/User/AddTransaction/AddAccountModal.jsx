@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { Modal, Portal, Text, TextInput, Button } from 'react-native-paper';
+import React, { useState, useCallback } from 'react';
+import { View, StyleSheet, Modal, Animated } from 'react-native';
+import { Text, TextInput, Button } from 'react-native-paper';
 import { colors } from '../../../theme';
 import { useFinances } from '../../../hooks/useFinances';
+import PropTypes from 'prop-types';
+import { currencyMask } from '../../../utils/masks';
 
 const AddAccountModal = ({ visible, onDismiss, themeColor }) => {
   const { addAccount, loading } = useFinances();
@@ -34,69 +36,85 @@ const AddAccountModal = ({ visible, onDismiss, themeColor }) => {
   };
 
   return (
-    <Portal>
-      <Modal
-        visible={visible}
-        onDismiss={onDismiss}
-        contentContainerStyle={styles.modalContainer}
-      >
-        <Text variant="titleLarge" style={styles.title}>Nova Conta</Text>
-        
-        {error ? (
-          <Text style={styles.errorText}>{error}</Text>
-        ) : null}
+    <Modal
+      visible={visible}
+      onRequestClose={onDismiss}
+      animationType="slide"
+      transparent={true}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          <Text variant="titleLarge" style={styles.title}>Nova Conta</Text>
 
-        <TextInput
-          label="Nome da Conta"
-          value={name}
-          onChangeText={setName}
-          mode="outlined"
-          style={styles.input}
-          outlineColor={themeColor}
-          activeOutlineColor={themeColor}
-        />
+          {error ? (
+            <Text style={styles.errorText}>{error}</Text>
+          ) : null}
 
-        <TextInput
-          label="Saldo Inicial (opcional)"
-          value={initialBalance}
-          onChangeText={setInitialBalance}
-          keyboardType="numeric"
-          mode="outlined"
-          style={styles.input}
-          outlineColor={themeColor}
-          activeOutlineColor={themeColor}
-        />
-
-        <View style={styles.buttonContainer}>
-          <Button
+          <TextInput
+            label="Nome da Conta"
+            value={name}
+            onChangeText={setName}
             mode="outlined"
-            onPress={onDismiss}
-            style={[styles.button, styles.cancelButton]}
-            textColor={colors.text}
-          >
-            Cancelar
-          </Button>
-          <Button
-            mode="contained"
-            onPress={handleSubmit}
-            style={[styles.button, { backgroundColor: themeColor }]}
-            loading={loading}
-            disabled={loading}
-          >
-            Salvar
-          </Button>
+            style={styles.input}
+            outlineColor={themeColor}
+            activeOutlineColor={themeColor}
+          />
+
+          <TextInput
+            label="Saldo Inicial (opcional)"
+            value={`R$ ${initialBalance}`}
+            onChangeText={(text) => setInitialBalance(currencyMask(text))}
+            keyboardType="numeric"
+            mode="outlined"
+            style={styles.input}
+            outlineColor={themeColor}
+            activeOutlineColor={themeColor}
+          />
+
+          <View style={styles.buttonContainer}>
+            <Button
+              mode="contained"
+              onPress={handleSubmit}
+              style={[styles.button, { backgroundColor: themeColor }]}
+              loading={loading}
+              disabled={loading}
+            >
+              Salvar
+            </Button>
+
+            <Button
+              mode="outlined"
+              onPress={onDismiss}
+              style={[styles.button, styles.cancelButton]}
+              textColor={colors.text}
+            >
+              Cancelar
+            </Button>
+          </View>
         </View>
-      </Modal>
-    </Portal>
+      </View>
+    </Modal>
   );
 };
 
+AddAccountModal.propTypes = {
+  visible: PropTypes.bool.isRequired,
+  onDismiss: PropTypes.func.isRequired,
+  themeColor: PropTypes.string.isRequired,
+};
+
 const styles = StyleSheet.create({
-  modalContainer: {
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
     backgroundColor: colors.background,
     padding: 20,
-    margin: 20,
-    borderRadius: 8,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    minHeight: '50%',
   },
   title: {
     marginBottom: 20,
@@ -108,13 +126,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 8,
+    gap: 8,
+    marginTop: 16,
   },
   button: {
-    flex: 1,
-    marginHorizontal: 4,
+    marginBottom: 8,
   },
   cancelButton: {
     borderColor: colors.text,

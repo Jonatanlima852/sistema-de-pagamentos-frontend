@@ -1,14 +1,28 @@
-import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { Modal, Portal, Text, TextInput, Button, SegmentedButtons } from 'react-native-paper';
+import React, { useState, useCallback, useEffect } from 'react';
+import { View, StyleSheet, Modal, Animated, Pressable } from 'react-native';
+import { Text, TextInput, Button, SegmentedButtons } from 'react-native-paper';
 import { colors } from '../../../theme';
 import { useFinances } from '../../../hooks/useFinances';
+import PropTypes from 'prop-types';
 
-const AddCategoryModal = ({ visible, onDismiss, themeColor, initialType }) => {
+const AddCategoryModal = React.memo(({ visible, onDismiss, themeColor, initialType }) => {
   const { addCategory, loading } = useFinances();
   const [name, setName] = useState('');
   const [type, setType] = useState(initialType);
   const [error, setError] = useState('');
+  const [nestedThemeColor, setNestedThemeColor] = useState(themeColor);
+
+  useEffect(() => {
+    setNestedThemeColor(type === 'EXPENSE' ? colors.expense : colors.income);
+  }, [type]);
+
+  const handleNameChange = useCallback((text) => {
+    setName(text);
+  }, []);
+
+  const handleTypeChange = useCallback((newType) => {
+    setType(newType);
+  }, []);
 
   const handleSubmit = async () => {
     try {
@@ -33,82 +47,121 @@ const AddCategoryModal = ({ visible, onDismiss, themeColor, initialType }) => {
   };
 
   return (
-    <Portal>
-      <Modal
-        visible={visible}
-        onDismiss={onDismiss}
-        contentContainerStyle={styles.modalContainer}
-      >
-        <Text variant="titleLarge" style={styles.title}>Nova Categoria</Text>
-        
-        {error ? (
-          <Text style={styles.errorText}>{error}</Text>
-        ) : null}
+    <Modal
+      visible={visible}
+      onRequestClose={onDismiss}
+      animationType="slide"
+      transparent={true}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          <Text variant="titleLarge" style={styles.title}>Nova Categoria</Text>
 
-        <SegmentedButtons
-          value={type}
-          onValueChange={setType}
-          buttons={[
-            {
-              value: 'EXPENSE',
-              label: 'Despesa',
-              style: {
-                borderColor: type === 'EXPENSE' ? colors.expense : '#999',
-                borderWidth: type === 'EXPENSE' ? 2 : 1,
+          {error ? (
+            <Text style={styles.errorText}>{error}</Text>
+          ) : null}
+
+          <SegmentedButtons
+            value={type}
+            onValueChange={(value) => {
+              setType(value);
+              setName('');
+            }}
+            buttons={[
+              {
+                value: 'EXPENSE',
+                label: 'Despesa',
+                style: {
+                  borderColor: type === 'EXPENSE' ? `${colors.expense}` : '#999',
+                  borderWidth: type === 'EXPENSE' ? 4 : 1,
+                  backgroundColor: type === 'EXPENSE' ? `${colors.expense}15` : 'transparent',
+                },
+                textColor: colors.expense,
               },
-            },
-            {
-              value: 'INCOME',
-              label: 'Receita',
-              style: {
-                borderColor: type === 'INCOME' ? colors.income : '#999',
-                borderWidth: type === 'INCOME' ? 2 : 1,
+              {
+                value: 'INCOME',
+                label: 'Receita',
+                style: {
+                  borderColor: type === 'INCOME' ? `${colors.income}` : '#999',
+                  borderWidth: type === 'INCOME' ? 4 : 1,
+                  backgroundColor: type === 'INCOME' ? `${colors.income}15` : 'transparent',
+                },
+                textColor: colors.income,
               },
-            },
-          ]}
-          style={styles.segmentedButtons}
-        />
+            ]}
+            style={styles.segmentedButton}
+          />
 
-        <TextInput
-          label="Nome da Categoria"
-          value={name}
-          onChangeText={setName}
-          mode="outlined"
-          style={styles.input}
-          outlineColor={themeColor}
-          activeOutlineColor={themeColor}
-        />
-
-        <View style={styles.buttonContainer}>
-          <Button
+          <TextInput
+            label="Nome da Categoria"
+            value={name}
+            onChangeText={handleNameChange}
             mode="outlined"
-            onPress={onDismiss}
-            style={[styles.button, styles.cancelButton]}
-            textColor={colors.text}
-          >
-            Cancelar
-          </Button>
-          <Button
-            mode="contained"
+            style={styles.input}
+            outlineColor={nestedThemeColor}
+            activeOutlineColor={nestedThemeColor}
+          />
+
+          <View style={styles.buttonContainer}>
+            <Pressable
             onPress={handleSubmit}
-            style={[styles.button, { backgroundColor: themeColor }]}
-            loading={loading}
             disabled={loading}
+            style={({ pressed }) => [
+              styles.saveButton,
+              {
+                backgroundColor: pressed 
+                  ? `${nestedThemeColor}80`
+                  : nestedThemeColor,
+
+                elevation: pressed 
+                  ? 0 
+                  : 4,
+              }
+            ]}
           >
-            Salvar
-          </Button>
+            {loading ? (
+              <ActivityIndicator color="white" />
+            ) : (
+              <Text style={styles.saveButtonText}>
+                Salvar
+              </Text>
+              )}
+            </Pressable>
+
+            <Button
+              mode="outlined"
+              onPress={onDismiss}
+              style={[styles.button, styles.cancelButton]}
+              textColor={colors.text}
+            >
+              Cancelar
+            </Button>
+          </View>
         </View>
-      </Modal>
-    </Portal>
+      </View>
+    </Modal>
   );
+});
+
+AddCategoryModal.propTypes = {
+  visible: PropTypes.bool.isRequired,
+  onDismiss: PropTypes.func.isRequired,
+  themeColor: PropTypes.string.isRequired,
+  initialType: PropTypes.string.isRequired,
 };
 
 const styles = StyleSheet.create({
-  modalContainer: {
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
     backgroundColor: colors.background,
     padding: 20,
-    margin: 20,
-    borderRadius: 8,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    minHeight: '50%',
   },
   title: {
     marginBottom: 20,
@@ -119,17 +172,25 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   input: {
+    marginTop: 24,
     marginBottom: 16,
     backgroundColor: colors.background,
   },
   buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 8,
+    gap: 8,
+    marginTop: 16,
   },
-  button: {
-    flex: 1,
-    marginHorizontal: 4,
+  saveButton: {
+    marginBottom: 8,
+    borderRadius: 24,
+    padding: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    textAlign: 'center',
+  },
+  saveButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
   },
   cancelButton: {
     borderColor: colors.text,
