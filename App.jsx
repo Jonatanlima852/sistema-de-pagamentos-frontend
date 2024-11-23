@@ -1,6 +1,6 @@
 import { SafeAreaView } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
-import { PaperProvider } from 'react-native-paper';
+import { Provider as PaperProvider } from 'react-native-paper';
 import Routes from './src/routes';
 import theme from './src/theme';
 import { useFonts } from 'expo-font';

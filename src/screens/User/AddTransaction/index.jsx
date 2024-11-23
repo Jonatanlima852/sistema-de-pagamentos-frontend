@@ -1,29 +1,17 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
-import { Text, TextInput, Button, SegmentedButtons} from 'react-native-paper';
-import {DropDown} from 'react-native-paper-dropdown'; 
+import { Text, TextInput, Button, SegmentedButtons } from 'react-native-paper';
+import { Picker } from '@react-native-picker/picker';
 import { colors } from '../../../theme';
 import SafeScreen from '../../../components/SafeScreen';
-import {useFinances} from '../../../hooks/useFinances'
+import { useFinances } from '../../../hooks/useFinances';
 
-
-  
-
-  const AddTransaction = () => {
-    const [transactionType, setTransactionType] = useState('expense');
-    const [amount, setAmount] = useState('');
-    const [description, setDescription] = useState('');
-    const [category, setCategory] = useState('');
-    const [date, setDate] = useState(new Date());
-    const { loading , error , categories} = useFinances()
-    console.log('Categorias carregadas:', categories);
-    const [showDropDown, setShowDropDown] = useState(false);
-
-    const formattedCategories = categories?.map((category) => ({
-      label: category.name, // Nome da categoria para exibição
-      value: category.id,   // ID da categoria como valor
-    })) || [];
-
+const AddTransaction = () => {
+  const { loading, error, categories = [], addTransaction } = useFinances();
+  const [transactionType, setTransactionType] = useState('expense');
+  const [amount, setAmount] = useState('');
+  const [description, setDescription] = useState('');
+  const [category, setCategory] = useState('');
 
   return (
     <SafeScreen>
@@ -59,22 +47,35 @@ import {useFinances} from '../../../hooks/useFinances'
             style={styles.input}
           />
 
-          <DropDown
-            label="Categoria"
-            mode="outlined"
-            visible={showDropDown}
-            showDropDown={() => setShowDropDown(true)}
-            onDismiss={() => setShowDropDown(false)}
-            value={category} 
-            setValue={setCategory} 
-            list={formattedCategories} 
-            style={styles.input}
-          />
+          <View style={styles.pickerContainer}>
+            <Picker
+              selectedValue={category}
+              onValueChange={(itemValue) => setCategory(itemValue)}
+              style={styles.picker}
+              mode="dropdown"
+            >
+              <Picker.Item 
+                label="Selecione uma categoria" 
+                value="" 
+                style={styles.pickerPlaceholder}
+              />
+              {categories.map((cat) => (
+                <Picker.Item
+                  key={cat.id}
+                  label={cat.name}
+                  value={cat.id.toString()}
+                  style={styles.pickerItem}
+                />
+              ))}
+            </Picker>
+          </View>
 
-          <Button 
-            mode="contained" 
-            onPress={() => {/* Lógica para salvar */}}
+          <Button
+            mode="contained"
+            onPress={() => console.log('Salvando...')}
             style={styles.button}
+            loading={loading}
+            disabled={loading || !amount || !description || !category}
           >
             Salvar
           </Button>
@@ -101,6 +102,27 @@ const styles = StyleSheet.create({
   },
   input: {
     marginBottom: 16,
+    backgroundColor: colors.background,
+  },
+  pickerContainer: {
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: colors.outline,
+    borderRadius: 4,
+    backgroundColor: colors.background,
+  },
+  picker: {
+    height: 50,
+    width: '100%',
+    color: colors.text,
+  },
+  pickerItem: {
+    color: colors.text,
+    fontSize: 16,
+  },
+  pickerPlaceholder: {
+    color: colors.placeholder,
+    fontSize: 16,
   },
   button: {
     marginTop: 24,
