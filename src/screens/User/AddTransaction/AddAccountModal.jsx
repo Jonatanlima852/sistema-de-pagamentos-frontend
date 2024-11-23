@@ -5,12 +5,26 @@ import { colors } from '../../../theme';
 import { useFinances } from '../../../hooks/useFinances';
 import PropTypes from 'prop-types';
 import { currencyMask } from '../../../utils/masks';
+import { Picker } from '@react-native-picker/picker';
+
+
+const accountTypes = [
+  { id: "SAVING", name: 'Poupança' },
+  { id: "CREDIT_CARD", name: 'Cartão de Crédito' },
+  { id: "DEBIT_CARD", name: 'Cartão de Débito' },
+  { id: "CASH", name: 'Dinheiro' },
+  { id: "INVESTMENT", name: 'Investimentos' },
+  { id: "BUSINESS_CARD", name: 'Cartão da empresa' },
+  { id: "OTHER", name: 'Outro' },
+];
 
 const AddAccountModal = ({ visible, onDismiss, themeColor }) => {
   const { addAccount, loading } = useFinances();
   const [name, setName] = useState('');
   const [initialBalance, setInitialBalance] = useState('');
   const [error, setError] = useState('');
+  const [accountType, setAccountType] = useState('');
+
 
   const handleSubmit = async () => {
     try {
@@ -19,9 +33,15 @@ const AddAccountModal = ({ visible, onDismiss, themeColor }) => {
         return;
       }
 
+      if (!accountType) {
+        setError('Tipo de conta é obrigatório');
+        return;
+      }
+
       const accountData = {
         name: name.trim(),
-        initialBalance: parseFloat(initialBalance.replace(',', '.')) || 0,
+        type: accountType,
+        balance: parseFloat(initialBalance.replace(',', '.')) || 0,
       };
 
       await addAccount(accountData);
@@ -59,6 +79,37 @@ const AddAccountModal = ({ visible, onDismiss, themeColor }) => {
             outlineColor={themeColor}
             activeOutlineColor={themeColor}
           />
+
+          <View style={styles.pickerWrapper}>
+            <Text style={styles.pickerLabel}>Tipo de Conta</Text>
+            <View style={[
+              styles.pickerContainer,
+              { borderColor: themeColor }
+            ]}>
+              <Picker
+                selectedValue={accountType}
+                onValueChange={setAccountType}
+                style={styles.picker}
+                mode="dropdown"
+                dropdownIconColor={themeColor}
+              >
+                <Picker.Item
+                  enabled={false}
+                  label="Selecione uma tipo de conta"
+                  value=""
+                  color={colors.placeholder}
+                />
+                {accountTypes.map((type) => (
+                  <Picker.Item
+                    key={type.id}
+                    label={type.name}
+                    value={type.id.toString()}
+                    color={themeColor}
+                  />
+                ))}
+              </Picker>
+            </View>
+          </View>
 
           <TextInput
             label="Saldo Inicial (opcional)"
@@ -139,6 +190,28 @@ const styles = StyleSheet.create({
     color: colors.error,
     marginBottom: 16,
     textAlign: 'center',
+  },
+  pickerWrapper: {
+    marginTop: 0,
+    marginBottom: 18,
+  },
+  pickerLabel: {
+    fontSize: 12,
+    color: colors.text,
+    marginBottom: 4,
+    marginLeft: 4,
+  },
+  pickerContainer: {
+    borderWidth: 2,
+    borderRadius: 8,
+    overflow: 'hidden',
+    height: 54,
+  },
+  picker: {
+    width: '100%',
+    height: 54,
+    color: colors.text,
+    marginLeft: -8,
   },
 });
 
