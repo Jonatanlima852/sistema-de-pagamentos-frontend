@@ -1,11 +1,14 @@
-import React, { useState, useMemo } from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
-import { Text, TextInput, Button, SegmentedButtons } from 'react-native-paper';
+import React, { useState, useMemo, useEffect } from 'react';
+import { View, StyleSheet, ScrollView, Pressable, ActivityIndicator, Animated } from 'react-native';
+import { Text, TextInput, Button, SegmentedButtons, Portal, Modal, IconButton } from 'react-native-paper';
 import { Picker } from '@react-native-picker/picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { colors } from '../../../theme';
 import SafeScreen from '../../../components/SafeScreen';
 import { useFinances } from '../../../hooks/useFinances';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { currencyMask } from '../../../utils/masks';
+import Toast from 'react-native-toast-message';
 
 const AddTransaction = () => {
   const { loading, error, categories = [], accounts = [], addTransaction } = useFinances();
@@ -16,6 +19,15 @@ const AddTransaction = () => {
   const [account, setAccount] = useState('');
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [themeColor, setThemeColor] = useState(colors.expense);
+  const [showSuccessAnimation] = useState(new Animated.Value(0));
+  const [showAddAccountModal, setShowAddAccountModal] = useState(false);
+  const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
+
+  useEffect(() => {
+    setThemeColor(transactionType === 'EXPENSE' ? colors.expense : colors.income);
+    console.log(themeColor);
+  }, [transactionType]);
 
   // Filtra categorias por tipo
   const filteredCategories = useMemo(() => {
@@ -38,11 +50,28 @@ const AddTransaction = () => {
     setTransactionType('EXPENSE');
   };
 
+  // Função para animar o sucesso
+  const animateSuccess = () => {
+    Animated.sequence([
+      Animated.timing(showSuccessAnimation, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.delay(1000),
+      Animated.timing(showSuccessAnimation, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
   const handleAddTransaction = async () => {
     try {
       const transactionData = {
         type: transactionType,
-        amount: parseFloat(amount.replace(',', '.')),
+        amount: parseFloat(amount.replace(/\D/g, '')) / 100, // Converte de centavos para reais
         description,
         date: date.toISOString(),
         categoryId: parseInt(category),
@@ -53,9 +82,20 @@ const AddTransaction = () => {
       const response = await addTransaction(transactionData);
       
       if (response && !error) {
+        animateSuccess();
+        Toast.show({
+          type: 'success',
+          text1: 'Sucesso!',
+          text2: 'Transação salva com sucesso',
+        });
         resetForm();
       }
     } catch (err) {
+      Toast.show({
+        type: 'error',
+        text1: 'Erro',
+        text2: 'Não foi possível salvar a transação',
+      });
       console.error('Erro ao adicionar transação:', err);
     }
   };
@@ -64,7 +104,11 @@ const AddTransaction = () => {
     <SafeScreen>
       <ScrollView style={styles.container}>
         <View style={styles.content}>
-          <Text variant="headlineSmall" style={styles.title}>Nova Transação</Text>
+          <View style={styles.titleContainer}>
+            <Text variant="headlineMedium" style={styles.title}>
+              Nova Transação
+            </Text>
+          </View>
 
           <SegmentedButtons
             value={transactionType}
@@ -73,20 +117,39 @@ const AddTransaction = () => {
               setCategory('');
             }}
             buttons={[
-              { value: 'EXPENSE', label: 'Despesa' },
-              { value: 'INCOME', label: 'Receita' },
+              {
+                value: 'EXPENSE',
+                label: 'Despesa',
+                style: {
+                  borderColor: transactionType === 'EXPENSE' ? `${colors.expense}` : '#999',
+                  borderWidth: transactionType === 'EXPENSE' ? 4 : 1,
+                  backgroundColor: transactionType === 'EXPENSE' ? `${colors.expense}15` : 'transparent',
+                },
+                textColor: colors.expense,
+              },
+              {
+                value: 'INCOME',
+                label: 'Receita',
+                style: {
+                  borderColor: transactionType === 'INCOME' ? `${colors.income}` : '#999',
+                  borderWidth: transactionType === 'INCOME' ? 4 : 1,
+                  backgroundColor: transactionType === 'INCOME' ? `${colors.income}15` : 'transparent',
+                },
+                textColor: colors.income,
+              },
             ]}
             style={styles.segmentedButton}
           />
 
           <TextInput
             label="Valor"
-            value={amount}
-            onChangeText={setAmount}
+            value={`R$ ${amount}`}
+            onChangeText={(text) => setAmount(currencyMask(text))}
             keyboardType="numeric"
             mode="outlined"
             style={styles.input}
-            left={<TextInput.Affix text="R$" />}
+            outlineColor={themeColor}
+            activeOutlineColor={themeColor}
           />
 
           <TextInput
@@ -94,19 +157,36 @@ const AddTransaction = () => {
             value={description}
             onChangeText={setDescription}
             mode="outlined"
-            style={styles.input}
+            style={[
+              styles.input,
+            ]}
+            outlineColor={themeColor}
+            activeOutlineColor={themeColor}
+            theme={{
+              colors: {
+                placeholder: `${themeColor}99`,
+              },
+            }}
           />
 
           <View style={styles.pickerWrapper}>
             <Text style={styles.pickerLabel}>Data</Text>
-            <Button
-              mode="outlined"
+            <Pressable
               onPress={() => setShowDatePicker(true)}
-              style={styles.dateButton}
-              icon="calendar"
+              style={({ pressed }) => [
+                styles.dateButton,
+                {
+                  borderColor: themeColor,
+                  backgroundColor: pressed ? `${themeColor}30` : `${themeColor}15`,
+                }
+              ]}
             >
-              {date.toLocaleDateString('pt-BR')}
-            </Button>
+              <View style={styles.dateButtonContent}>
+                <Text style={[styles.dateButtonText, { color: themeColor }]}>
+                  {date.toLocaleDateString('pt-BR')}
+                </Text>
+              </View>
+            </Pressable>
             {showDatePicker && (
               <DateTimePicker
                 value={date}
@@ -125,13 +205,16 @@ const AddTransaction = () => {
 
           <View style={styles.pickerWrapper}>
             <Text style={styles.pickerLabel}>Conta</Text>
-            <View style={styles.pickerContainer}>
+            <View style={[
+              styles.pickerContainer,
+              { borderColor: themeColor }
+            ]}>
               <Picker
                 selectedValue={account}
                 onValueChange={setAccount}
                 style={styles.picker}
                 mode="dropdown"
-                dropdownIconColor={colors.text}
+                dropdownIconColor={themeColor}
               >
                 <Picker.Item
                   enabled={false}
@@ -144,7 +227,7 @@ const AddTransaction = () => {
                     key={acc.id}
                     label={acc.name}
                     value={acc.id.toString()}
-                    color={colors.text}
+                    color={themeColor}
                   />
                 ))}
               </Picker>
@@ -153,13 +236,16 @@ const AddTransaction = () => {
 
           <View style={styles.pickerWrapper}>
             <Text style={styles.pickerLabel}>Categoria</Text>
-            <View style={styles.pickerContainer}>
+            <View style={[
+              styles.pickerContainer,
+              { borderColor: themeColor }
+            ]}>
               <Picker
                 selectedValue={category}
                 onValueChange={setCategory}
                 style={styles.picker}
                 mode="dropdown"
-                dropdownIconColor={colors.text}
+                dropdownIconColor={themeColor}
               >
                 <Picker.Item
                   enabled={false}
@@ -172,27 +258,104 @@ const AddTransaction = () => {
                     key={cat.id}
                     label={cat.name}
                     value={cat.id.toString()}
-                    color={colors.text}
+                    color={themeColor}
                   />
                 ))}
               </Picker>
             </View>
           </View>
 
-          <Button
-            mode="contained"
+          
+
+          <Pressable
             onPress={handleAddTransaction}
-            style={[
-              styles.button,
-              isFormValid ? styles.buttonValid : styles.buttonInvalid
-            ]}
-            loading={loading}
             disabled={loading || !isFormValid}
+            style={({ pressed }) => [
+              styles.saveButton,
+              {
+                backgroundColor: isFormValid 
+                  ? pressed 
+                    ? `${themeColor}80`
+                    : themeColor
+                  : `${themeColor}40`,
+
+                elevation: isFormValid 
+                  ? pressed 
+                    ? 0 
+                    : 4
+                  : 0,
+              }
+            ]}
           >
-            Salvar
-          </Button>
+            {loading ? (
+              <ActivityIndicator color="white" />
+            ) : (
+              <Text style={styles.saveButtonText}>
+                Salvar
+              </Text>
+            )}
+          </Pressable>
+
+          <View style={styles.bottomActions}>
+            <Pressable
+              onPress={() => setShowAddAccountModal(true)}
+              style={styles.actionButton}
+            >
+              <Icon name="bank-plus" size={24} color={themeColor} />
+              <Text style={[styles.actionButtonText, { color: themeColor }]}>
+                Nova Conta
+              </Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => setShowAddCategoryModal(true)}
+              style={styles.actionButton}
+            >
+              <Icon name="shape-plus" size={24} color={themeColor} />
+              <Text style={[styles.actionButtonText, { color: themeColor }]}>
+                Nova Categoria
+              </Text>
+            </Pressable>
+          </View>
+          
         </View>
       </ScrollView>
+
+      {/* Modais */}
+      <Portal>
+        <Modal
+          visible={showAddAccountModal}
+          onDismiss={() => setShowAddAccountModal(false)}
+          contentContainerStyle={styles.modalContainer}
+        >
+          <Text>Adicionar Nova Conta</Text>
+          {/* Conteúdo do modal de conta */}
+        </Modal>
+
+        <Modal
+          visible={showAddCategoryModal}
+          onDismiss={() => setShowAddCategoryModal(false)}
+          contentContainerStyle={styles.modalContainer}
+        >
+          <Text>Adicionar Nova Categoria</Text>
+          {/* Conteúdo do modal de categoria */}
+        </Modal>
+      </Portal>
+      {/* Modais */}
+      {/* <Portal>
+        <AddAccountModal
+          visible={showAddAccountModal}
+          onDismiss={() => setShowAddAccountModal(false)}
+          themeColor={themeColor}
+        />
+
+        <AddCategoryModal
+          visible={showAddCategoryModal}
+          onDismiss={() => setShowAddCategoryModal(false)}
+          themeColor={themeColor}
+          initialType={transactionType}
+        />
+      </Portal> */}
     </SafeScreen>
   );
 };
@@ -205,19 +368,37 @@ const styles = StyleSheet.create({
   content: {
     padding: 16,
   },
-  title: {
-    marginBottom: 24,
-    color: colors.text,
+  titleContainer: {
+    alignItems: 'center',
+    marginBottom: 32,
   },
-  segmentedButton: {
+  title: {
+    color: colors.text,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  titleUnderline: {
+    height: 3,
+    width: 60,
+    backgroundColor: colors.primary,
+    marginTop: 8,
+    borderRadius: 2,
+  },
+  segmentedButtons: {
     marginBottom: 24,
+  },
+  segmentButton: {
+    borderWidth: 2,
+    flex: 1,
   },
   input: {
-    marginBottom: 16,
-    backgroundColor: colors.background,
+    marginTop: 20,
+    marginBottom: 0,
+    height: 54,
   },
   pickerWrapper: {
-    marginBottom: 16,
+    marginTop: 16,
+    marginBottom: 0,
   },
   pickerLabel: {
     fontSize: 12,
@@ -226,31 +407,68 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   pickerContainer: {
-    borderWidth: 1,
-    borderColor: colors.outline,
-    borderRadius: 4,
-    backgroundColor: colors.background,
+    borderWidth: 2,
+    borderRadius: 8,
     overflow: 'hidden',
+    height: 54,
   },
   picker: {
     width: '100%',
-    height: 50,
+    height: 54,
     color: colors.text,
     marginLeft: -8,
   },
   dateButton: {
-    borderColor: colors.outline,
-    borderWidth: 1,
-    borderRadius: 4,
+    borderWidth: 2,
+    borderRadius: 8,
+    height: 54,
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'row',
+    paddingHorizontal: 16,
   },
-  button: {
+  dateButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  dateButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  saveButton: {
     marginTop: 24,
+    height: 54,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  buttonValid: {
-    backgroundColor: colors.success, // Verde quando válido
+  saveButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
-  buttonInvalid: {
-    backgroundColor: colors.disabled, // Cinza quando inválido
+  bottomActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: 24,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: colors.outline,
+  },
+  actionButton: {
+    alignItems: 'center',
+    padding: 12,
+  },
+  actionButtonText: {
+    marginTop: 4,
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  modalContainer: {
+    backgroundColor: colors.background,
+    padding: 20,
+    margin: 20,
+    borderRadius: 8,
   },
 });
 

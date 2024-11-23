@@ -12,6 +12,10 @@ const colors = {
     error: '#D32F2F',
     warning: '#FFA000',
     disabled: '#90A4AE',
+    income: '#27ae60', // Verde mais escuro
+    expense: '#c0392b', // Vermelho mais escuro
+    incomeLight: '#2ecc71', // Verde mais claro para estados hover/disabled
+    expenseLight: '#e74c3c', // Vermelho mais claro para estados hover/disabled
 };
 
 const theme = {
