@@ -12,14 +12,14 @@ import Toast from 'react-native-toast-message';
 import AddAccountModal from './AddAccountModal';
 import AddCategoryModal from './AddCategoryModal';
 
-const AddTransaction = () => {
+  const AddTransaction = () => {
   const { loading, error, categories = [], accounts = [], addTransaction } = useFinances();
   const [transactionType, setTransactionType] = useState('EXPENSE');
-  const [amount, setAmount] = useState('');
-  const [description, setDescription] = useState('');
-  const [category, setCategory] = useState('');
+    const [amount, setAmount] = useState('');
+    const [description, setDescription] = useState('');
+    const [category, setCategory] = useState('');
   const [account, setAccount] = useState('');
-  const [date, setDate] = useState(new Date());
+    const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [themeColor, setThemeColor] = useState(colors.expense);
   const [showSuccessAnimation] = useState(new Animated.Value(0));
@@ -263,7 +263,7 @@ const AddTransaction = () => {
                   label="Selecione uma categoria"
                   value=""
                   color={colors.placeholder}
-                />
+          />
                 {filteredCategories.map((cat) => (
                   <Picker.Item
                     key={cat.id}
@@ -302,7 +302,7 @@ const AddTransaction = () => {
               <ActivityIndicator color="white" />
             ) : (
               <Text style={styles.saveButtonText}>
-                Salvar
+            Salvar
               </Text>
             )}
           </Pressable>
@@ -362,6 +362,7 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   title: {
+    marginBottom: 24,
     color: colors.text,
     fontWeight: 'bold',
     textAlign: 'center',
