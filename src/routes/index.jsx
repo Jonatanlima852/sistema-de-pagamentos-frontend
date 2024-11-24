@@ -6,7 +6,7 @@ const Router = () => {
     const { authData, loading } = useAuth();
 
     if (loading) {
-      return null; // ou um componente de loading
+      return null;
     }
 
     console.log(authData)
