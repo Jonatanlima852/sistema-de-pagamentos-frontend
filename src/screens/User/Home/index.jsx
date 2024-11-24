@@ -9,7 +9,8 @@ import { StyleSheet } from 'react-native';
 import { colors } from '../../../theme';
 
 const Home = () => {
-  const { transactions } = useFinances(); // Importa as transações do hook
+  const { transactions } = useFinances();
+  const { user } = useAuth();
 
   // Maior despesa
   const largestExpense = transactions
