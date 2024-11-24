@@ -32,8 +32,6 @@ export const FinancesProvider = ({ children }) => {
           financesService.getCategories(),
         ]);
 
-        console.log('Contas carregadas:', accountsData);
-        console.log('Categorias carregadas:', categoriesData);
 
         setAccounts(accountsData);
         setCategories(categoriesData);
@@ -122,7 +120,6 @@ export const FinancesProvider = ({ children }) => {
       const transactionsData = Array.isArray(response) ? response : 
                              (response?.data?.transactions || response?.transactions || []);
       
-      console.log('Transações carregadas:', transactionsData);
 
       setTransactions(current => 
         reset ? transactionsData : [...current, ...transactionsData]
