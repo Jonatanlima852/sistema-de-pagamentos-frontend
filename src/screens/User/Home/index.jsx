@@ -14,21 +14,28 @@ const Home = () => {
   const { user } = useAuth();
 
   // Maior despesa
-  const largestExpense = transactions
-    .filter((transaction) => transaction.type === 'EXPENSE')
-    .reduce((prev, current) => (current.amount > prev.amount ? current : prev), transactions[0]);
+  const largestExpense = transactions.length > 0
+    ? transactions
+      .filter((transaction) => transaction.type === 'EXPENSE' && transaction.amount != null)
+      .reduce((prev, current) => (current.amount > prev.amount ? current : prev), { amount: 0, description: 'N/A', date: 'N/A' })
+    : { amount: 0, description: 'N/A', date: 'N/A' };
+
 
   // Últimas 5 transações
   const latestTransactions = transactions.slice(0, 5);
 
   // Dados de receitas e despesas
-  const totalIncome = transactions
-    .filter((transaction) => transaction.type === 'INCOME')
-    // .reduce((sum, transaction) => sum + transaction.amount, 0);
+  const totalIncome = transactions.length > 0
+    ? transactions
+      .filter((transaction) => transaction.type === 'INCOME' && transaction.amount != null)
+      .reduce((sum, transaction) => sum + parseFloat(transaction.amount), 0)
+    : 0;
 
-  const totalExpense = transactions
-    .filter((transaction) => transaction.type === 'EXPENSE')
-    // .reduce((sum, transaction) => sum + transaction.amount, 0);
+  const totalExpense = transactions.length > 0
+    ? transactions
+      .filter((transaction) => transaction.type === 'EXPENSE' && transaction.amount != null)
+      .reduce((sum, transaction) => sum + parseFloat(transaction.amount), 0)
+    : 0;
 
   const balance = totalIncome - totalExpense;
 
@@ -49,14 +56,14 @@ const Home = () => {
           <Card style={[styles.summaryCard, { backgroundColor: colors.success }]}>
             <Card.Content>
               <Text variant="titleMedium" style={styles.cardTitle}>Receitas</Text>
-              {/* <Text variant="titleLarge" style={styles.cardValue}>R$ {totalIncome.toFixed(2)}</Text> */}
+              <Text variant="titleLarge" style={styles.cardValue}>R$ {totalIncome.toFixed(2)}</Text>
             </Card.Content>
           </Card>
 
           <Card style={[styles.summaryCard, { backgroundColor: colors.error }]}>
             <Card.Content>
               <Text variant="titleMedium" style={styles.cardTitle}>Despesas</Text>
-              {/* <Text variant="titleLarge" style={styles.cardValue}>R$ {totalExpense.toFixed(2)}</Text> */}
+              <Text variant="titleLarge" style={styles.cardValue}>R$ {totalExpense.toFixed(2)}</Text>
             </Card.Content>
           </Card>
         </View>
@@ -67,10 +74,10 @@ const Home = () => {
           <Card style={styles.transactionCard}>
             <Card.Content>
               <View style={styles.transactionHeader}>
-                {/* <Text style={styles.transactionTitle}>{largestExpense.description}</Text> */}
-                {/* <Text style={styles.transactionDate}>{largestExpense.date}</Text> */}
+                <Text style={styles.transactionTitle}>{largestExpense.description}</Text>
+                <Text style={styles.transactionDate}>{largestExpense.date}</Text>
               </View>
-              {/* <Text style={styles.transactionValue}>R$ {largestExpense.amount.toFixed(2)}</Text> */}
+              <Text style={styles.transactionValue}>R$ {largestExpense.amount}</Text>
             </Card.Content>
           </Card>
         </View>
@@ -78,20 +85,32 @@ const Home = () => {
         {/* Últimas Transações */}
         <View style={styles.section}>
           <Text variant="titleMedium" style={styles.sectionTitle}>Últimas Transações</Text>
-          {latestTransactions.map((transaction) => (
-            <View key={transaction.id} style={styles.transactionRow}>
-              {/* <Text style={styles.transactionDescription}>{transaction.description}</Text> */}
-              <Text
-                style={[
-                  styles.transactionAmount,
-                  transaction.type === 'INCOME' ? styles.income : styles.expense,
-                ]}
+          {latestTransactions.length > 0 ? (
+            latestTransactions.map((transaction) => (
+              <View
+                key={transaction?.id || Math.random().toString(36).substring(2, 15)} // Garante uma chave única
+                style={styles.transactionRow}
               >
-                {/* {transaction.type === 'INCOME' ? '+' : '-'} R$ {transaction.amount.toFixed(2)} */}
-              </Text>
-            </View>
-          ))}
+                <Text style={styles.transactionDescription}>
+                  {transaction?.description || 'Sem descrição'}
+                </Text>
+                <Text
+                  style={[
+                    styles.transactionAmount,
+                    transaction?.type === 'INCOME' ? styles.income : styles.expense,
+                  ]}
+                >
+                  {transaction?.type === 'INCOME' ? '+' : '-'} R${' '}
+                  {typeof parseFloat(transaction?.amount) === 'number' ? parseFloat(transaction.amount) : '0.00'}
+                </Text>
+              </View>
+            ))
+          ) : (
+            <Text style={styles.transactionDescription}>Nenhuma transação registrada</Text>
+          )}
         </View>
+
+
       </ScrollView>
     </SafeScreen>
   );
