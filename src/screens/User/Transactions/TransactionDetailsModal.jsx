@@ -3,11 +3,26 @@ import { View, StyleSheet, Modal, Pressable } from 'react-native';
 import { Text, IconButton } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { colors } from '../../../theme';
+import { useFinances } from '../../../hooks/useFinances';
 
 const TransactionDetailsModal = ({ visible, onDismiss, transaction }) => {
+  const { accounts, categories } = useFinances();
+
   if (!transaction) return null;
 
   const themeColor = transaction.type.toUpperCase() === 'INCOME' ? colors.income : colors.expense;
+
+  const getTransactionDetails = () => {
+    const category = categories.find(cat => cat.id === transaction.categoryId);
+    const account = accounts.find(acc => acc.id === transaction.accountId);
+
+    return {
+      category,
+      account,
+    };
+  };
+
+  const { category, account } = getTransactionDetails();
 
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -72,33 +87,24 @@ const TransactionDetailsModal = ({ visible, onDismiss, transaction }) => {
               <Text style={styles.value}>{formatDate(transaction.date)}</Text>
             </View>
 
-            <View style={styles.detailRow}>
-              <View style={styles.labelContainer}>
-                <Icon name="swap-horizontal" size={20} color={themeColor} />
-                <Text style={styles.label}>Tipo</Text>
-              </View>
-              <Text style={styles.value}>
-                {transaction.type.toUpperCase() === 'INCOME' ? 'Receita' : 'Despesa'}
-              </Text>
-            </View>
 
-            {transaction.category && (
+            {category && (
               <View style={styles.detailRow}>
                 <View style={styles.labelContainer}>
                   <Icon name="tag-outline" size={20} color={themeColor} />
                   <Text style={styles.label}>Categoria</Text>
                 </View>
-                <Text style={styles.value}>{transaction.category.name}</Text>
+                <Text style={styles.value}>{category.name}</Text>
               </View>
             )}
 
-            {transaction.account && (
+            {account && (
               <View style={styles.detailRow}>
                 <View style={styles.labelContainer}>
                   <Icon name="bank-outline" size={20} color={themeColor} />
                   <Text style={styles.label}>Conta</Text>
                 </View>
-                <Text style={styles.value}>{transaction.account.name}</Text>
+                <Text style={styles.value}>{account.name}</Text>
               </View>
             )}
 
