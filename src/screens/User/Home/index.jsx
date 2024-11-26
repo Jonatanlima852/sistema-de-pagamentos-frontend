@@ -3,13 +3,14 @@ import { View, ScrollView } from 'react-native';
 import { Text, Surface, Card } from 'react-native-paper';
 import { colors } from '../../../theme';
 import SafeScreen from '../../../components/SafeScreen';
-import { styles } from './styles';
+// import { styles } from './styles';
 import { useFinances } from '../../../hooks/useFinances';
 import { StyleSheet } from 'react-native';
-import { colors } from '../../../theme';
+import { useAuth } from '../../../hooks/useAuth';
 
 const Home = () => {
   const { transactions } = useFinances();
+  console.log(transactions)
   const { user } = useAuth();
 
   // Maior despesa
@@ -23,11 +24,11 @@ const Home = () => {
   // Dados de receitas e despesas
   const totalIncome = transactions
     .filter((transaction) => transaction.type === 'INCOME')
-    .reduce((sum, transaction) => sum + transaction.amount, 0);
+    // .reduce((sum, transaction) => sum + transaction.amount, 0);
 
   const totalExpense = transactions
     .filter((transaction) => transaction.type === 'EXPENSE')
-    .reduce((sum, transaction) => sum + transaction.amount, 0);
+    // .reduce((sum, transaction) => sum + transaction.amount, 0);
 
   const balance = totalIncome - totalExpense;
 
@@ -48,14 +49,14 @@ const Home = () => {
           <Card style={[styles.summaryCard, { backgroundColor: colors.success }]}>
             <Card.Content>
               <Text variant="titleMedium" style={styles.cardTitle}>Receitas</Text>
-              <Text variant="titleLarge" style={styles.cardValue}>R$ {totalIncome.toFixed(2)}</Text>
+              {/* <Text variant="titleLarge" style={styles.cardValue}>R$ {totalIncome.toFixed(2)}</Text> */}
             </Card.Content>
           </Card>
 
           <Card style={[styles.summaryCard, { backgroundColor: colors.error }]}>
             <Card.Content>
               <Text variant="titleMedium" style={styles.cardTitle}>Despesas</Text>
-              <Text variant="titleLarge" style={styles.cardValue}>R$ {totalExpense.toFixed(2)}</Text>
+              {/* <Text variant="titleLarge" style={styles.cardValue}>R$ {totalExpense.toFixed(2)}</Text> */}
             </Card.Content>
           </Card>
         </View>
@@ -66,10 +67,10 @@ const Home = () => {
           <Card style={styles.transactionCard}>
             <Card.Content>
               <View style={styles.transactionHeader}>
-                <Text style={styles.transactionTitle}>{largestExpense.description}</Text>
-                <Text style={styles.transactionDate}>{largestExpense.date}</Text>
+                {/* <Text style={styles.transactionTitle}>{largestExpense.description}</Text> */}
+                {/* <Text style={styles.transactionDate}>{largestExpense.date}</Text> */}
               </View>
-              <Text style={styles.transactionValue}>R$ {largestExpense.amount.toFixed(2)}</Text>
+              {/* <Text style={styles.transactionValue}>R$ {largestExpense.amount.toFixed(2)}</Text> */}
             </Card.Content>
           </Card>
         </View>
@@ -79,14 +80,14 @@ const Home = () => {
           <Text variant="titleMedium" style={styles.sectionTitle}>Últimas Transações</Text>
           {latestTransactions.map((transaction) => (
             <View key={transaction.id} style={styles.transactionRow}>
-              <Text style={styles.transactionDescription}>{transaction.description}</Text>
+              {/* <Text style={styles.transactionDescription}>{transaction.description}</Text> */}
               <Text
                 style={[
                   styles.transactionAmount,
                   transaction.type === 'INCOME' ? styles.income : styles.expense,
                 ]}
               >
-                {transaction.type === 'INCOME' ? '+' : '-'} R$ {transaction.amount.toFixed(2)}
+                {/* {transaction.type === 'INCOME' ? '+' : '-'} R$ {transaction.amount.toFixed(2)} */}
               </Text>
             </View>
           ))}
