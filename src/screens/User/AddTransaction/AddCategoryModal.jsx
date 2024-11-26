@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { View, StyleSheet, Modal, Animated, Pressable } from 'react-native';
+import { View, StyleSheet, Modal, Animated, Pressable, KeyboardAvoidingView, Platform } from 'react-native';
 import { Text, TextInput, Button, SegmentedButtons } from 'react-native-paper';
 import { colors } from '../../../theme';
 import { useFinances } from '../../../hooks/useFinances';
@@ -53,92 +53,97 @@ const AddCategoryModal = React.memo(({ visible, onDismiss, themeColor, initialTy
       animationType="slide"
       transparent={true}
     >
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          <Text variant="titleLarge" style={styles.title}>Nova Categoria</Text>
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={{ flex: 1 }}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text variant="titleLarge" style={styles.title}>Nova Categoria</Text>
 
-          {error ? (
-            <Text style={styles.errorText}>{error}</Text>
-          ) : null}
+            {error ? (
+              <Text style={styles.errorText}>{error}</Text>
+            ) : null}
 
-          <SegmentedButtons
-            value={type}
-            onValueChange={(value) => {
-              setType(value);
-              setName('');
-            }}
-            buttons={[
-              {
-                value: 'EXPENSE',
-                label: 'Despesa',
-                style: {
-                  borderColor: type === 'EXPENSE' ? `${colors.expense}` : '#999',
-                  borderWidth: type === 'EXPENSE' ? 4 : 1,
-                  backgroundColor: type === 'EXPENSE' ? `${colors.expense}15` : 'transparent',
+            <SegmentedButtons
+              value={type}
+              onValueChange={(value) => {
+                setType(value);
+                setName('');
+              }}
+              buttons={[
+                {
+                  value: 'EXPENSE',
+                  label: 'Despesa',
+                  style: {
+                    borderColor: type === 'EXPENSE' ? `${colors.expense}` : '#999',
+                    borderWidth: type === 'EXPENSE' ? 4 : 1,
+                    backgroundColor: type === 'EXPENSE' ? `${colors.expense}15` : 'transparent',
+                  },
+                  textColor: colors.expense,
                 },
-                textColor: colors.expense,
-              },
-              {
-                value: 'INCOME',
-                label: 'Receita',
-                style: {
-                  borderColor: type === 'INCOME' ? `${colors.income}` : '#999',
-                  borderWidth: type === 'INCOME' ? 4 : 1,
-                  backgroundColor: type === 'INCOME' ? `${colors.income}15` : 'transparent',
+                {
+                  value: 'INCOME',
+                  label: 'Receita',
+                  style: {
+                    borderColor: type === 'INCOME' ? `${colors.income}` : '#999',
+                    borderWidth: type === 'INCOME' ? 4 : 1,
+                    backgroundColor: type === 'INCOME' ? `${colors.income}15` : 'transparent',
+                  },
+                  textColor: colors.income,
                 },
-                textColor: colors.income,
-              },
-            ]}
-            style={styles.segmentedButton}
-          />
+              ]}
+              style={styles.segmentedButton}
+            />
 
-          <TextInput
-            label="Nome da Categoria"
-            value={name}
-            onChangeText={handleNameChange}
-            mode="outlined"
-            style={styles.input}
-            outlineColor={nestedThemeColor}
-            activeOutlineColor={nestedThemeColor}
-          />
-
-          <View style={styles.buttonContainer}>
-            <Pressable
-            onPress={handleSubmit}
-            disabled={loading}
-            style={({ pressed }) => [
-              styles.saveButton,
-              {
-                backgroundColor: pressed 
-                  ? `${nestedThemeColor}80`
-                  : nestedThemeColor,
-
-                elevation: pressed 
-                  ? 0 
-                  : 4,
-              }
-            ]}
-          >
-            {loading ? (
-              <ActivityIndicator color="white" />
-            ) : (
-              <Text style={styles.saveButtonText}>
-                Salvar
-              </Text>
-              )}
-            </Pressable>
-
-            <Button
+            <TextInput
+              label="Nome da Categoria"
+              value={name}
+              onChangeText={handleNameChange}
               mode="outlined"
-              onPress={onDismiss}
-              style={[styles.button, styles.cancelButton]}
-              textColor={colors.text}
+              style={styles.input}
+              outlineColor={nestedThemeColor}
+              activeOutlineColor={nestedThemeColor}
+            />
+
+            <View style={styles.buttonContainer}>
+              <Pressable
+              onPress={handleSubmit}
+              disabled={loading}
+              style={({ pressed }) => [
+                styles.saveButton,
+                {
+                  backgroundColor: pressed 
+                    ? `${nestedThemeColor}80`
+                    : nestedThemeColor,
+
+                  elevation: pressed 
+                    ? 0 
+                    : 4,
+                }
+              ]}
             >
-              Cancelar
-            </Button>
+              {loading ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <Text style={styles.saveButtonText}>
+                  Salvar
+                </Text>
+                )}
+              </Pressable>
+
+              <Button
+                mode="outlined"
+                onPress={onDismiss}
+                style={[styles.button, styles.cancelButton]}
+                textColor={colors.text}
+              >
+                Cancelar
+              </Button>
+            </View>
           </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 });

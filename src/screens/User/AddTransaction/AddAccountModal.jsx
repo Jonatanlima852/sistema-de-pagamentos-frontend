@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, StyleSheet, Modal, Animated, Platform, Pressable } from 'react-native';
+import { View, StyleSheet, Modal, Animated, Platform, Pressable, KeyboardAvoidingView } from 'react-native';
 import { Text, TextInput, Button, List } from 'react-native-paper';
 import { colors } from '../../../theme';
 import { useFinances } from '../../../hooks/useFinances';
@@ -158,59 +158,64 @@ const AddAccountModal = ({ visible, onDismiss, themeColor }) => {
       animationType="slide"
       transparent={true}
     >
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          <Text variant="titleLarge" style={styles.title}>Nova Conta</Text>
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={{ flex: 1 }}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text variant="titleLarge" style={styles.title}>Nova Conta</Text>
 
-          {error ? (
-            <Text style={styles.errorText}>{error}</Text>
-          ) : null}
+            {error ? (
+              <Text style={styles.errorText}>{error}</Text>
+            ) : null}
 
-          <TextInput
-            label="Nome da Conta"
-            value={name}
-            onChangeText={setName}
-            mode="outlined"
-            style={styles.input}
-            outlineColor={themeColor}
-            activeOutlineColor={themeColor}
-          />
-
-          {renderAccountTypeSelector()}
-
-          <TextInput
-            label="Saldo Inicial (opcional)"
-            value={`R$ ${initialBalance}`}
-            onChangeText={(text) => setInitialBalance(currencyMask(text))}
-            keyboardType="numeric"
-            mode="outlined"
-            style={styles.input}
-            outlineColor={themeColor}
-            activeOutlineColor={themeColor}
-          />
-
-          <View style={styles.buttonContainer}>
-            <Button
-              mode="contained"
-              onPress={handleSubmit}
-              style={[styles.button, { backgroundColor: themeColor }]}
-              loading={loading}
-              disabled={loading}
-            >
-              Salvar
-            </Button>
-
-            <Button
+            <TextInput
+              label="Nome da Conta"
+              value={name}
+              onChangeText={setName}
               mode="outlined"
-              onPress={onDismiss}
-              style={[styles.button, styles.cancelButton]}
-              textColor={colors.text}
-            >
-              Cancelar
-            </Button>
+              style={styles.input}
+              outlineColor={themeColor}
+              activeOutlineColor={themeColor}
+            />
+
+            {renderAccountTypeSelector()}
+
+            <TextInput
+              label="Saldo Inicial (opcional)"
+              value={`R$ ${initialBalance}`}
+              onChangeText={(text) => setInitialBalance(currencyMask(text))}
+              keyboardType="numeric"
+              mode="outlined"
+              style={styles.input}
+              outlineColor={themeColor}
+              activeOutlineColor={themeColor}
+            />
+
+            <View style={styles.buttonContainer}>
+              <Button
+                mode="contained"
+                onPress={handleSubmit}
+                style={[styles.button, { backgroundColor: themeColor }]}
+                loading={loading}
+                disabled={loading}
+              >
+                Salvar
+              </Button>
+
+              <Button
+                mode="outlined"
+                onPress={onDismiss}
+                style={[styles.button, styles.cancelButton]}
+                textColor={colors.text}
+              >
+                Cancelar
+              </Button>
+            </View>
           </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };
