@@ -11,7 +11,8 @@ import { useAuth } from '../../../hooks/useAuth';
 const Home = () => {
   const { transactions } = useFinances();
   console.log(transactions)
-  const { user } = useAuth();
+  const {authData} = useAuth();
+  console.log('auth:', { authData })
 
   // Maior despesa
   const largestExpense = transactions.length > 0
@@ -44,7 +45,7 @@ const Home = () => {
       <ScrollView style={styles.container}>
         {/* Cabeçalho com saldo total */}
         <Surface style={styles.header} elevation={2}>
-          <Text variant="headlineSmall" style={styles.greeting}>Olá, {largestExpense?.user || 'Usuário'}</Text>
+          <Text variant="headlineSmall" style={styles.greeting}>Olá, {authData?.user?.name}</Text>
           <Text variant="titleMedium" style={styles.balance}>Saldo Total</Text>
           <Text variant="displaySmall" style={styles.balanceValue}>
             R$ {balance.toFixed(2)}
