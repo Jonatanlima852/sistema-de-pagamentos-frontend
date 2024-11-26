@@ -1,39 +1,60 @@
-import { View, StyleSheet } from 'react-native';
+import { useState } from 'react';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Text } from 'react-native-paper';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { colors } from '../../../theme';
+import TransactionDetailsModal from './TransactionDetailsModal';
 
 const TransactionItem = ({ item }) => {
-    // Formata o valor para moeda brasileira
-    const formatCurrency = (value) => {
-      return new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
-        currency: 'BRL'
-      }).format(value);
-    };
-  
-    // Formata a data para o padrão brasileiro
-    const formatDate = (dateString) => {
-      return new Date(dateString).toLocaleDateString('pt-BR');
-    };
-  
-    return (
-      <View style={styles.transactionItem}>
-        <View style={styles.transactionInfo}>
-          <Text variant="titleMedium">{item.description}</Text>
-          <Text variant="bodyMedium" style={{ color: colors.textLight }}>
-            {formatDate(item.date)}
+  const [visible, setVisible] = useState(false);
+
+  const formatCurrency = (value) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value);
+  };
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('pt-BR');
+  };
+
+  return (
+    <>
+      <TouchableOpacity onPress={() => setVisible(true)}>
+        <View style={styles.transactionItem}>
+          <View style={styles.leftContent}>
+            <Icon 
+              name={item.type.toUpperCase() === 'INCOME' ? 'arrow-up-circle' : 'arrow-down-circle'} 
+              size={24} 
+              color={item.type.toUpperCase() === 'INCOME' ? colors.income : colors.expense}
+            />
+            <View style={styles.transactionInfo}>
+              <Text variant="titleMedium" style={styles.description}>{item.description}</Text>
+              <Text variant="bodyMedium" style={styles.date}>
+                {formatDate(item.date)}
+              </Text>
+            </View>
+          </View>
+          <Text 
+            variant="titleMedium" 
+            style={[
+              styles.amount,
+              { color: item.type.toUpperCase() === 'INCOME' ? colors.income : colors.expense }
+            ]}
+          >
+            {formatCurrency(item.amount)}
           </Text>
         </View>
-        <Text 
-          variant="titleMedium" 
-          style={{ 
-            color: item.type.toUpperCase() === 'INCOME' ? colors.success : colors.error 
-          }}
-        >
-          {formatCurrency(item.amount)}
-        </Text>
-      </View>
-    );
+      </TouchableOpacity>
+
+      <TransactionDetailsModal
+        visible={visible}
+        onDismiss={() => setVisible(false)}
+        transaction={item}
+      />
+    </>
+  );
 };
 
 const styles = StyleSheet.create({
@@ -41,12 +62,31 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 12,
     borderBottomWidth: 1,
     borderBottomColor: colors.surface,
+    backgroundColor: colors.background,
+  },
+  leftContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    gap: 12,
   },
   transactionInfo: {
     flex: 1,
+  },
+  description: {
+    fontWeight: '500',
+  },
+  date: {
+    color: colors.textLight,
+    fontSize: 12,
+    marginTop: 2,
+  },
+  amount: {
+    fontWeight: '600',
   },
 });
   
