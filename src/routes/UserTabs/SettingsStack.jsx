@@ -3,7 +3,6 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Settings from '../../screens/User/Settings';
 import EditProfile from '../../screens/User/Settings/EditProfile';
 import Categories from '../../screens/User/Settings/Categories';
-import Limits from '../../screens/User/Settings/Limits';
 import Preferences from '../../screens/User/Settings/Preferences';
 import Accounts from '../../screens/User/Settings/Accounts';
 
