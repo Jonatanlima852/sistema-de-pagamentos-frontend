@@ -28,6 +28,11 @@ const Settings = ({ navigation }) => {
       route: 'Categories',
     },
     {
+      title: 'Minhas Contas',
+      icon: 'bank',
+      route: 'Accounts',
+    },
+    {
       title: 'Meus Limites',
       icon: 'chart-line',
       route: 'Limits',

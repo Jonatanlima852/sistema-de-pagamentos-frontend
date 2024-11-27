@@ -5,6 +5,7 @@ import EditProfile from '../../screens/User/Settings/EditProfile';
 import Categories from '../../screens/User/Settings/Categories';
 import Limits from '../../screens/User/Settings/Limits';
 import Preferences from '../../screens/User/Settings/Preferences';
+import Accounts from '../../screens/User/Settings/Accounts';
 
 const Stack = createNativeStackNavigator();
 
@@ -25,6 +26,11 @@ const SettingsStack = () => {
         name="Categories" 
         component={Categories}
         options={{ title: 'Minhas Categorias' }}
+      />
+      <Stack.Screen 
+        name="Accounts" 
+        component={Accounts}
+        options={{ title: 'Minhas Contas' }}
       />
       <Stack.Screen 
         name="Limits" 
