@@ -17,6 +17,7 @@ const TransactionFilters = ({ visible, onClose, filters, updateFilters }) => {
   const [selectedCategories, setSelectedCategories] = useState(filters.categories || []);
 
   const handleApplyFilters = () => {
+    console.log('Categorias selecionadas:', selectedCategories);
     updateFilters({
       ...filters,
       transactionType,
@@ -309,16 +310,6 @@ const styles = StyleSheet.create({
     padding: 8,
     paddingHorizontal: 12,
     backgroundColor: 'transparent',
-  },
-  selectedCategoriesInfo: {
-    padding: 16,
-    backgroundColor: `${colors.primary}10`,
-    borderRadius: 8,
-    marginTop: 16,
-  },
-  selectedCategoriesNames: {
-    marginTop: 4,
-    color: colors.primary,
   },
 });
 
