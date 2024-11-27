@@ -1,14 +1,14 @@
 import { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { Text } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { colors } from '../../../theme';
 import TransactionDetailsModal from './TransactionDetailsModal';
-// import { useFinances } from '../../../context/FinancesContext';
+import { useFinances } from '../../../hooks/useFinances';
 
 const TransactionItem = ({ item }) => {
   const [visible, setVisible] = useState(false);
-  // const { deleteTransaction } = useFinances();
+  const { updateTransaction, deleteTransaction } = useFinances();
 
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -22,19 +22,24 @@ const TransactionItem = ({ item }) => {
   };
 
   const handleUpdate = async (updatedTransaction) => {
-    // Implementar lógica de atualização
-    console.log('Transação atualizada:', updatedTransaction);
+    try {
+      const { id, ...updateData } = updatedTransaction;
+      await updateTransaction(id, updateData);
+      setVisible(false);
+    } catch (error) {
+      console.error('Erro ao atualizar transação:', error);
+      Alert.alert('Erro', 'Não foi possível atualizar a transação. Tente novamente.');
+    }
   };
 
   const handleDelete = async (transactionId) => {
-    // try {
-    //   await deleteTransaction(transactionId);
-    //   setVisible(false);
-    // } catch (error) {
-    //   console.error('Erro ao deletar transação:', error);
-    // }
-     // Implementar lógica de atualização
-     console.log('Transação atualizada:', transactionId);
+    try {
+      console.log('transactionId', Number(transactionId)+1);
+      await deleteTransaction(Number(transactionId));
+      setVisible(false);
+    } catch (error) {
+      console.error('Erro ao deletar transação:', error);
+    }
   };
 
   return (
@@ -48,7 +53,9 @@ const TransactionItem = ({ item }) => {
               color={item.type.toUpperCase() === 'INCOME' ? colors.income : colors.expense}
             />
             <View style={styles.transactionInfo}>
-              <Text variant="titleMedium" style={styles.description}>{item.description}</Text>
+              <Text variant="titleMedium" style={styles.description}>
+                {item.description}
+              </Text>
               <Text variant="bodyMedium" style={styles.date}>
                 {formatDate(item.date)}
               </Text>

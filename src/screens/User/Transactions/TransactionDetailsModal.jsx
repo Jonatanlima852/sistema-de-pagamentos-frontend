@@ -11,12 +11,32 @@ import CustomDatePicker from '../../../components/CustomDatePicker';
 const TransactionDetailsModal = ({ visible, onDismiss, transaction, onUpdate, onDelete }) => {
     const { accounts, categories } = useFinances();
     const [isEditing, setIsEditing] = useState(false);
-    const [editedTransaction, setEditedTransaction] = useState(transaction);
+    const [editedTransaction, setEditedTransaction] = useState(null);
     const [showCategoryPicker, setShowCategoryPicker] = useState(false);
     const [showAccountPicker, setShowAccountPicker] = useState(false);
     const [showDatePicker, setShowDatePicker] = useState(false);
 
-    if (!transaction) return null;
+    React.useEffect(() => {
+        if (transaction) {
+            setEditedTransaction({
+                ...transaction,
+                amount: Number(transaction.amount),
+                date: transaction.date,
+                description: transaction.description || '',
+                notes: transaction.notes || '',
+                categoryId: Number(transaction.categoryId),
+                accountId: Number(transaction.accountId),
+            });
+        }
+    }, [transaction]);
+
+    React.useEffect(() => {
+        if (!visible) {
+            setIsEditing(false);
+        }
+    }, [visible]);
+
+    if (!transaction || !editedTransaction) return null;
 
     const themeColor = transaction.type.toUpperCase() === 'INCOME' ? colors.income : colors.expense;
 
@@ -37,10 +57,25 @@ const TransactionDetailsModal = ({ visible, onDismiss, transaction, onUpdate, on
 
     const handleSave = async () => {
         try {
-            await onUpdate(editedTransaction);
+            const updateData = {
+                description: editedTransaction.description,
+                amount: editedTransaction.amount,
+                date: editedTransaction.date,
+                type: editedTransaction.type,
+                isRecurring: editedTransaction.isRecurring,
+                categoryId: editedTransaction.categoryId,
+                accountId: editedTransaction.accountId,
+                notes: editedTransaction.notes,
+            };
+
+            await onUpdate({
+                id: transaction.id,
+                ...updateData
+            });
             setIsEditing(false);
         } catch (error) {
             console.error('Erro ao atualizar transação:', error);
+            Alert.alert('Erro', 'Não foi possível atualizar a transação. Tente novamente.');
         }
     };
 
@@ -83,12 +118,38 @@ const TransactionDetailsModal = ({ visible, onDismiss, transaction, onUpdate, on
         );
     };
 
+    const handleStartEditing = () => {
+        setEditedTransaction({
+            ...transaction,
+            amount: Number(transaction.amount),
+            date: transaction.date,
+            description: transaction.description || '',
+            notes: transaction.notes || '',
+            categoryId: Number(transaction.categoryId),
+            accountId: Number(transaction.accountId),
+        });
+        setIsEditing(true);
+    };
+
+    const handleCancel = () => {
+        setIsEditing(false);
+        setEditedTransaction({
+            ...transaction,
+            amount: Number(transaction.amount),
+            date: transaction.date,
+            description: transaction.description || '',
+            notes: transaction.notes || '',
+            categoryId: Number(transaction.categoryId),
+            accountId: Number(transaction.accountId),
+        });
+    };
+
     const renderEditButton = () => (
         <IconButton
             icon={isEditing ? "content-save" : "pencil"}
             size={24}
             iconColor={themeColor}
-            onPress={isEditing ? handleSave : () => setIsEditing(true)}
+            onPress={isEditing ? handleSave : handleStartEditing}
             style={styles.editIcon}
         />
     );
@@ -101,7 +162,7 @@ const TransactionDetailsModal = ({ visible, onDismiss, transaction, onUpdate, on
                         <CustomPicker
                             label="Categoria"
                             selectedValue={editedTransaction.categoryId}
-                            onValueChange={(value) => setEditedTransaction(prev => ({ ...prev, categoryId: value }))}
+                            onValueChange={(value) => setEditedTransaction(prev => ({ ...prev, categoryId: Number(value) }))}
                             items={categories}
                             placeholder="Selecione uma categoria"
                             showPicker={showCategoryPicker}
@@ -119,7 +180,7 @@ const TransactionDetailsModal = ({ visible, onDismiss, transaction, onUpdate, on
                         <CustomPicker
                             label="Conta"
                             selectedValue={editedTransaction.accountId}
-                            onValueChange={(value) => setEditedTransaction(prev => ({ ...prev, accountId: value }))}
+                            onValueChange={(value) => setEditedTransaction(prev => ({ ...prev, accountId: Number(value) }))}
                             items={accounts}
                             placeholder="Selecione uma conta"
                             showPicker={showAccountPicker}
@@ -162,16 +223,23 @@ const TransactionDetailsModal = ({ visible, onDismiss, transaction, onUpdate, on
                         <Text style={styles.label}>{label}</Text>
                     </View>
                     <TextInput
-                        value={editableField === 'amount' ? currencyMask(editedTransaction[editableField].toString()) : editedTransaction[editableField]}
+                        value={editableField === 'amount' 
+                            ? currencyMask(((editedTransaction[editableField] || 0) * 100).toString()) 
+                            : editedTransaction[editableField] || ''}
                         onChangeText={(text) => {
                             let newValue = text;
                             if (editableField === 'amount') {
                                 newValue = text.replace(/[^0-9]/g, '');
+                                setEditedTransaction(prev => ({
+                                    ...prev,
+                                    [editableField]: newValue ? parseFloat(newValue) / 100 : 0
+                                }));
+                            } else {
+                                setEditedTransaction(prev => ({
+                                    ...prev,
+                                    [editableField]: text || ''
+                                }));
                             }
-                            setEditedTransaction(prev => ({
-                                ...prev,
-                                [editableField]: editableField === 'amount' ? parseFloat(newValue) / 100 : text
-                            }));
                         }}
                         mode="outlined"
                         style={styles.input}
@@ -213,7 +281,7 @@ const TransactionDetailsModal = ({ visible, onDismiss, transaction, onUpdate, on
                                     icon={isEditing ? "content-save" : "pencil"}
                                     size={24}
                                     iconColor={themeColor}
-                                    onPress={isEditing ? handleSave : () => setIsEditing(true)}
+                                    onPress={isEditing ? handleSave : handleStartEditing}
                                     style={styles.actionIcon}
                                 />
                                 <IconButton
@@ -293,10 +361,7 @@ const TransactionDetailsModal = ({ visible, onDismiss, transaction, onUpdate, on
                                     </Button>
                                     <Button
                                         mode="outlined"
-                                        onPress={() => {
-                                            setIsEditing(false);
-                                            setEditedTransaction(transaction);
-                                        }}
+                                        onPress={handleCancel}
                                         style={styles.cancelButton}
                                     >
                                         Cancelar
