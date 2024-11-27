@@ -1,36 +1,79 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Modal, TextInput, ScrollView } from 'react-native';
-import { List, FAB, Divider, Text, Button } from 'react-native-paper';
+import { View, StyleSheet, Modal, TextInput, ScrollView, Alert, Pressable } from 'react-native';
+import { List, FAB, Divider, Text, Button, IconButton } from 'react-native-paper';
 import SafeScreen from '../../../components/SafeScreen';
 import { useFinances } from '../../../hooks/useFinances';
 import AddAccountModal from '../AddTransaction/AddAccountModal';
 import { colors } from '../../../theme';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const Accounts = () => {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [newAccountName, setNewAccountName] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  const { accounts, updateAccount, deleteAccount } = useFinances();
 
   const handleEditAccount = (account) => {
-    console.log('Editar conta');
     setSelectedAccount(account);
     setNewAccountName(account.name);
     setEditModalVisible(true);
   };
 
-  const handleSaveAccount = () => {
-    if (selectedAccount) {
-      console.log(`Conta editada: ${selectedAccount.name} -> ${newAccountName}`);
-      // Lógica para salvar o nome da conta editada (API, hook, etc.)
-    }
-    setEditModalVisible(false);
-    setSelectedAccount(null);
-    setNewAccountName('');
+  const handleStartEditing = () => {
+    setIsEditing(true);
   };
 
-  const { accounts } = useFinances(); // Supõe que o hook useFinances retorna contas
-  console.log('accounts: ', { accounts });
+  const handleCancel = () => {
+    setIsEditing(false);
+    setNewAccountName(selectedAccount.name);
+  };
+
+  const handleSaveAccount = async () => {
+    try {
+      await updateAccount(selectedAccount.id, {
+        name: newAccountName,
+        type: selectedAccount.type
+      });
+      setEditModalVisible(false);
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Erro ao atualizar conta:', error);
+      Alert.alert('Erro', 'Não foi possível atualizar a conta. Tente novamente.');
+    }
+  };
+
+  const handleDelete = () => {
+    Alert.alert(
+      'Excluir Conta',
+      'Tem certeza que deseja excluir esta conta? Esta ação não pode ser desfeita.',
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+        {
+          text: 'Excluir',
+          onPress: async () => {
+            try {
+              await deleteAccount(selectedAccount.id);
+              setEditModalVisible(false);
+            } catch (error) {
+              console.error('Erro ao excluir conta:', error);
+              Alert.alert(
+                'Não é possível excluir',
+                'Esta conta possui transações vinculadas. Remova todas as transações desta conta antes de excluí-la.',
+                [{ text: 'OK' }]
+              );
+            }
+          },
+          style: 'destructive',
+        },
+      ],
+      { cancelable: true }
+    );
+  };
 
   // Filtra as contas por tipo
   const accountTypes = {
@@ -114,23 +157,90 @@ const Accounts = () => {
         >
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
-              <Text variant="titleLarge" style={styles.modalTitle}>
-                Editar Conta
-              </Text>
-              <TextInput
-                style={styles.input}
-                value={newAccountName}
-                onChangeText={setNewAccountName}
-                placeholder="Novo nome da conta"
-              />
-              <View style={styles.modalButtons}>
-                <Button mode="contained" onPress={handleSaveAccount} style={styles.saveButton}>
-                  Salvar
-                </Button>
-                <Button mode="outlined" onPress={() => setEditModalVisible(false)} style={styles.cancelButton}>
-                  Cancelar
-                </Button>
+              <View style={styles.header}>
+                <View style={styles.headerActions}>
+                  <IconButton
+                    icon={isEditing ? "content-save" : "pencil"}
+                    size={24}
+                    iconColor={colors.primary}
+                    onPress={isEditing ? handleSaveAccount : handleStartEditing}
+                    style={styles.actionIcon}
+                  />
+                  <IconButton
+                    icon="delete-outline"
+                    size={24}
+                    iconColor={colors.error}
+                    onPress={handleDelete}
+                    style={styles.actionIcon}
+                  />
+                </View>
+                <Text variant="titleLarge" style={styles.title}>Detalhes</Text>
+                <IconButton
+                  icon="close"
+                  size={24}
+                  onPress={() => setEditModalVisible(false)}
+                  style={styles.closeIcon}
+                />
               </View>
+
+              <ScrollView 
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.scrollContent}
+              >
+                <View style={styles.detailsContainer}>
+                  <View style={styles.detailRow}>
+                    <View style={styles.labelContainer}>
+                      <Icon name="bank" size={20} color={colors.primary} />
+                      <Text style={styles.label}>Nome da Conta</Text>
+                    </View>
+                    {isEditing ? (
+                      <TextInput
+                        value={newAccountName}
+                        onChangeText={setNewAccountName}
+                        mode="outlined"
+                        style={styles.input}
+                        outlineColor={colors.primary}
+                        activeOutlineColor={colors.primary}
+                      />
+                    ) : (
+                      <Text style={styles.value}>{selectedAccount?.name}</Text>
+                    )}
+                  </View>
+                </View>
+
+                {isEditing && (
+                  <View style={styles.buttonContainer}>
+                    <Button
+                      mode="contained"
+                      onPress={handleSaveAccount}
+                      style={[styles.button, { backgroundColor: colors.primary }]}
+                    >
+                      Salvar Alterações
+                    </Button>
+                    <Button
+                      mode="outlined"
+                      onPress={handleCancel}
+                      style={styles.cancelButton}
+                    >
+                      Cancelar
+                    </Button>
+                  </View>
+                )}
+
+                {!isEditing && (
+                  <View style={styles.buttonContainer}>
+                    <Pressable
+                      onPress={() => setEditModalVisible(false)}
+                      style={({ pressed }) => [
+                        styles.closeButton,
+                        { backgroundColor: pressed ? `${colors.primary}15` : 'transparent' }
+                      ]}
+                    >
+                      <Text style={[styles.closeButtonText, { color: colors.primary }]}>Fechar</Text>
+                    </Pressable>
+                  </View>
+                )}
+              </ScrollView>
             </View>
           </View>
         </Modal>
@@ -156,37 +266,90 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: 'white',
+    backgroundColor: colors.background,
     padding: 20,
-    borderRadius: 10,
-    width: '80%',
-    alignItems: 'center',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    minHeight: '40%',
+    maxHeight: '50%',
   },
-  modalTitle: {
-    marginBottom: 16,
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    paddingHorizontal: 8,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: -8,
+  },
+  actionIcon: {
+    marginLeft: -4,
+  },
+  title: {
+    textAlign: 'center',
+    color: colors.text,
+    flex: 1,
+  },
+  closeIcon: {
+    marginRight: -8,
+  },
+  detailsContainer: {
+    gap: 24,
+  },
+  detailRow: {
+    minHeight: 54,
+    justifyContent: 'center',
+  },
+  labelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
+  },
+  label: {
+    fontSize: 14,
+    color: colors.text,
+    opacity: 0.7,
+  },
+  value: {
+    fontSize: 16,
+    color: colors.text,
+    paddingLeft: 28,
+    marginTop: 4,
   },
   input: {
-    width: '100%',
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
-    marginBottom: 16,
-    fontSize: 16,
-    paddingVertical: 8,
+    backgroundColor: colors.background,
+    marginLeft: 28,
+    marginTop: 4,
+    height: 40,
   },
-  modalButtons: {
-    flexDirection: 'row',
-    gap: 10,
-    marginTop: 20,
+  buttonContainer: {
+    marginTop: 32,
+    gap: 8,
   },
-  saveButton: {
-    flex: 1,
+  button: {
+    borderRadius: 8,
   },
   cancelButton: {
-    flex: 1,
+    borderColor: colors.text,
+    borderWidth: 1,
+    borderRadius: 8,
+    backgroundColor: colors.surface,
+  },
+  closeButton: {
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  closeButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
   },
 });
 
