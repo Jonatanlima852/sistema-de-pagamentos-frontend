@@ -1,47 +1,57 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Button } from 'react-native-paper';
+import { Button, Text } from 'react-native-paper';
 
 const TransactionTypeButtons = ({ selectedType, onTypeChange }) => {
+  const buttons = [
+    { label: 'Todos', value: 'all' },
+    { label: 'Despesa', value: 'expense' },
+    { label: 'Receita', value: 'income' },
+  ];
+
   return (
-    <View style={styles.transactionTypeButtons}>
-      <Button
-        mode={selectedType === 'all' ? 'contained' : 'outlined'}
-        onPress={() => onTypeChange('all')}
-        style={[styles.typeButton, selectedType === 'all' && styles.activeButton]}
-      >
-        Todos
-      </Button>
-      <Button
-        mode={selectedType === 'expense' ? 'contained' : 'outlined'}
-        onPress={() => onTypeChange('expense')}
-        style={[styles.typeButton, selectedType === 'expense' && styles.activeButton]}
-      >
-        Despesa
-      </Button>
-      <Button
-        mode={selectedType === 'income' ? 'contained' : 'outlined'}
-        onPress={() => onTypeChange('income')}
-        style={[styles.typeButton, selectedType === 'income' && styles.activeButton]}
-      >
-        Receita
-      </Button>
+    <View style={styles.container}>
+      {buttons.map((button) => (
+        <Button
+        key={button.value}
+        mode={selectedType === button.value ? 'contained' : 'outlined'}
+        onPress={() => {
+            onTypeChange(button.value); // Atualiza o estado corretamente
+        }}
+        style={[
+            styles.button,
+            selectedType === button.value && styles.selectedButton, // Aplica estilo quando selecionado
+        ]}
+        labelStyle={[
+            styles.buttonText,
+            selectedType === button.value && styles.selectedButtonText,
+        ]}
+        >
+        {button.label}
+        </Button>
+      ))}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  transactionTypeButtons: {
+  container: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     marginVertical: 16,
   },
-  typeButton: {
+  button: {
     flex: 1,
     marginHorizontal: 4,
   },
-  activeButton: {
-    backgroundColor: '#6200ea',
+  selectedButton: {
+    backgroundColor: '#6200ea', // Cor de fundo padrão para selecionado
+  },
+  buttonText: {
+    color: '#000',
+  },
+  selectedButtonText: {
+    color: '#fff', // Cor de texto quando selecionado
   },
 });
 
