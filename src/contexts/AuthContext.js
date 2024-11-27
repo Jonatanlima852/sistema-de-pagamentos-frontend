@@ -57,13 +57,49 @@ export const AuthProvider = ({ children }) => {
     await AsyncStorage.removeItem('@AuthData');
   };
 
+  const updateUser = async ({ name, email, currentPassword, newPassword }) => {
+    try {
+      const userData = {
+        name,
+        email,
+        ...(newPassword && {
+          password: newPassword,
+          currentPassword: currentPassword
+        })
+      };
+
+      const updatedUser = await authService.update(userData);
+      
+      const newAuthData = {
+        token: authData.token,
+        user: updatedUser
+      };
+
+      await AsyncStorage.setItem('@AuthData', JSON.stringify(newAuthData));
+      setAuthData(newAuthData);
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const deleteAccount = async () => {
+    try {
+      await authService.delete();
+      await signOut();
+    } catch (error) {
+      throw error;
+    }
+  };
+
   return (
     <AuthContext.Provider value={{ 
       authData, 
       loading,
       signIn,
       signUp,
-      signOut
+      signOut,
+      updateUser,
+      deleteAccount
     }}>
       {children}
     </AuthContext.Provider>

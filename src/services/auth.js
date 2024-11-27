@@ -16,6 +16,23 @@ export const authService = {
     const response = await api.get('/api/me');
     return response.data;
   },
+
+  update: async (userData) => {
+    try {
+      const response = await api.put('/users', userData);
+      return response.data;
+    } catch (error) {
+      throw handleApiError(error);
+    }
+  },
+
+  delete: async () => {
+    try {
+      await api.delete('/users');
+    } catch (error) {
+      throw handleApiError(error);
+    }
+  },
 };
 
 export { setAuthToken };

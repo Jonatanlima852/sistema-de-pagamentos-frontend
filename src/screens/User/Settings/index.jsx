@@ -33,11 +33,6 @@ const Settings = ({ navigation }) => {
       route: 'Accounts',
     },
     {
-      title: 'Meus Limites',
-      icon: 'chart-line',
-      route: 'Limits',
-    },
-    {
       title: 'Configurações',
       icon: 'cog',
       route: 'Preferences',
