@@ -59,13 +59,12 @@ const TransactionDetailsModal = ({ visible, onDismiss, transaction, onUpdate, on
         try {
             const updateData = {
                 description: editedTransaction.description,
-                amount: editedTransaction.amount,
-                date: editedTransaction.date,
+                amount: Number(editedTransaction.amount),
+                date: new Date(editedTransaction.date).toISOString(),
                 type: editedTransaction.type,
-                isRecurring: editedTransaction.isRecurring,
-                categoryId: editedTransaction.categoryId,
-                accountId: editedTransaction.accountId,
-                notes: editedTransaction.notes,
+                isRecurring: Boolean(editedTransaction.isRecurring),
+                categoryId: Number(editedTransaction.categoryId),
+                accountId: Number(editedTransaction.accountId),
             };
 
             await onUpdate({
