@@ -23,7 +23,6 @@ export const FinancesProvider = ({ children }) => {
 
   // Carregamento inicial de dados essenciais
   useEffect(() => {
-    console.log('Carregando dados iniciais...');
     const loadInitialData = async () => {
       try {
         // Carrega contas e categorias em paralelo pois são independentes

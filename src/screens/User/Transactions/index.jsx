@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { Searchbar, Button } from 'react-native-paper';
 import SafeScreen from '../../../components/SafeScreen';
@@ -19,6 +19,22 @@ const Transactions = () => {
 
   const [filterVisible, setFilterVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredTransactions = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return transactions;
+    }
+
+    const searchLower = searchQuery.toLowerCase().trim();
+    return transactions.filter(transaction => {
+      const descriptionMatch = transaction.description?.toLowerCase().includes(searchLower);
+      const categoryMatch = transaction.category?.name?.toLowerCase().includes(searchLower);
+      const accountMatch = transaction.account?.name?.toLowerCase().includes(searchLower);
+      const amountMatch = transaction.amount?.toString().includes(searchLower);
+
+      return descriptionMatch || categoryMatch || accountMatch || amountMatch;
+    });
+  }, [transactions, searchQuery]);
 
   const handleLoadMore = () => {
     if (!loading && pagination.hasMore) {
@@ -46,7 +62,7 @@ const Transactions = () => {
         </View>
 
         <TransactionList 
-          transactions={transactions} 
+          transactions={filteredTransactions} 
           loading={loading} 
           handleLoadMore={handleLoadMore} 
         />

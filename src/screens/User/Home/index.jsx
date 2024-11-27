@@ -10,9 +10,7 @@ import { useAuth } from '../../../hooks/useAuth';
 
 const Home = () => {
   const { transactions } = useFinances();
-  console.log(transactions)
   const {authData} = useAuth();
-  console.log('auth:', { authData })
 
   // Maior despesa
   const largestExpense = transactions.length > 0

@@ -14,8 +14,6 @@ export const api = axios.create({
   baseURL: getBaseUrl(),
 });
 
-// Para debug
-console.log('API URL:', getBaseUrl());
 
 export const setAuthToken = (token) => {
   if (token) {

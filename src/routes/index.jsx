@@ -9,7 +9,6 @@ const Router = () => {
       return null;
     }
 
-    console.log(authData)
     return (
       authData ? <AppStack /> : <AuthStack />
     );

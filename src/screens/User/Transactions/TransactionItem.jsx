@@ -34,7 +34,6 @@ const TransactionItem = ({ item }) => {
 
   const handleDelete = async (transactionId) => {
     try {
-      console.log('transactionId', Number(transactionId)+1);
       await deleteTransaction(Number(transactionId));
       setVisible(false);
     } catch (error) {
