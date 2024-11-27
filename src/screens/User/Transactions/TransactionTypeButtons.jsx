@@ -1,53 +1,80 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { Button } from 'react-native-paper';
+import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
 import { colors } from '../../../theme';
 
 const TransactionTypeButtons = ({ selectedType, onTypeChange }) => {
+  const getButtonStyle = (type) => {
+    switch(type) {
+      case 'all':
+        return {
+          button: [
+            styles.button,
+            selectedType === 'all' && {
+              backgroundColor: colors.primary,
+              borderColor: colors.primary,
+            }
+          ],
+          text: [
+            styles.buttonText,
+            { color: selectedType === 'all' ? 'white' : colors.primary }
+          ]
+        };
+      case 'income':
+        return {
+          button: [
+            styles.button,
+            selectedType === 'income' && {
+              backgroundColor: colors.success,
+              borderColor: colors.success,
+            }
+          ],
+          text: [
+            styles.buttonText,
+            { color: selectedType === 'income' ? 'white' : colors.success }
+          ]
+        };
+      case 'expense':
+        return {
+          button: [
+            styles.button,
+            selectedType === 'expense' && {
+              backgroundColor: colors.error,
+              borderColor: colors.error,
+            }
+          ],
+          text: [
+            styles.buttonText,
+            { color: selectedType === 'expense' ? 'white' : colors.error }
+          ]
+        };
+    }
+  };
+
   return (
     <View style={styles.container}>
-      <Button
-        mode="outlined"
+      <TouchableOpacity
         onPress={() => onTypeChange('all')}
-        style={[
-          styles.button,
-          {
-            backgroundColor: selectedType === 'all' ? `${colors.primary}15` : 'transparent',
-            borderColor: selectedType === 'all' ? colors.primary : colors.border,
-          }
-        ]}
-        textColor={colors.primary}
+        style={getButtonStyle('all').button}
+        activeOpacity={0.7}
       >
-        Todos
-      </Button>
-      <Button
-        mode="outlined"
+        <Text style={getButtonStyle('all').text}>Todos</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
         onPress={() => onTypeChange('income')}
-        style={[
-          styles.button,
-          {
-            backgroundColor: selectedType === 'income' ? `${colors.success}15` : 'transparent',
-            borderColor: selectedType === 'income' ? colors.success : colors.border,
-          }
-        ]}
-        textColor={colors.success}
+        style={getButtonStyle('income').button}
+        activeOpacity={0.7}
       >
-        Receitas
-      </Button>
-      <Button
-        mode="outlined"
+        <Text style={getButtonStyle('income').text}>Receitas</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
         onPress={() => onTypeChange('expense')}
-        style={[
-          styles.button,
-          {
-            backgroundColor: selectedType === 'expense' ? `${colors.error}15` : 'transparent',
-            borderColor: selectedType === 'expense' ? colors.error : colors.border,
-          }
-        ]}
-        textColor={colors.error}
+        style={getButtonStyle('expense').button}
+        activeOpacity={0.7}
       >
-        Despesas
-      </Button>
+        <Text style={getButtonStyle('expense').text}>Despesas</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -60,6 +87,17 @@ const styles = StyleSheet.create({
   button: {
     flex: 1,
     borderWidth: 1.5,
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'transparent',
+    borderColor: colors.border,
+  },
+  buttonText: {
+    fontSize: 14,
+    fontWeight: '500',
   },
 });
 

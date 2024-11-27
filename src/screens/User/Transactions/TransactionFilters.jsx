@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Modal, StyleSheet, ScrollView } from 'react-native';
+import { View, Modal, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Text, Button, SegmentedButtons, Divider, Portal, Chip } from 'react-native-paper';
 import TransactionTypeButtons from './TransactionTypeButtons';
 import CustomDatePicker from '../../../components/CustomDatePicker';
@@ -41,42 +41,51 @@ const TransactionFilters = ({ visible, onClose, filters, updateFilters }) => {
     });
   };
 
-  const toggleCategory = (categoryId) => {
-    setSelectedCategories(prev => 
-      prev.includes(categoryId)
-        ? prev.filter(id => id !== categoryId)
-        : [...prev, categoryId]
-    );
+  const handleCategorySelection = (categoryId) => {
+    setSelectedCategories(prev => {
+      if (prev.includes(categoryId)) {
+        return prev.filter(id => id !== categoryId);
+      } else {
+        return [...prev, categoryId];
+      }
+    });
   };
 
   const renderCategories = (type) => {
-    const filteredCategories = categories.filter(cat => cat.type === type);
-    
+    const typeCategories = categories?.filter(cat => cat.type === type) || [];
+
     return (
-      <View style={styles.categoriesContainer}>
-        <Text variant="titleMedium" style={styles.categoryTypeTitle}>
-          {type === 'income' ? 'Receitas' : 'Despesas'}
+      <View style={styles.categorySection}>
+        <Text variant="titleMedium" style={styles.categoryTitle}>
+          {type === 'INCOME' ? 'Receitas' : 'Despesas'}
         </Text>
-        <View style={styles.chipContainer}>
-          {filteredCategories.map(category => (
-            <Chip
+        <View style={styles.categoriesGrid}>
+          {typeCategories.map((category) => (
+            <TouchableOpacity
               key={category.id}
-              selected={selectedCategories.includes(category.id)}
-              onPress={() => toggleCategory(category.id)}
               style={[
-                styles.categoryChip,
+                styles.categoryButton,
                 selectedCategories.includes(category.id) && {
-                  backgroundColor: type === 'income' ? `${colors.success}20` : `${colors.error}20`
+                  backgroundColor: type === 'INCOME' 
+                    ? `${colors.success}20` 
+                    : `${colors.error}20`,
+                  borderColor: type === 'INCOME' ? colors.success : colors.error,
                 }
               ]}
-              textStyle={{
-                color: selectedCategories.includes(category.id)
-                  ? (type === 'income' ? colors.success : colors.error)
-                  : colors.text
-              }}
+              onPress={() => handleCategorySelection(category.id)}
             >
-              {category.name}
-            </Chip>
+              <Text
+                style={[
+                  styles.categoryText,
+                  selectedCategories.includes(category.id) && {
+                    color: type === 'INCOME' ? colors.success : colors.error,
+                    fontWeight: '500'
+                  }
+                ]}
+              >
+                {category.name}
+              </Text>
+            </TouchableOpacity>
           ))}
         </View>
       </View>
@@ -173,8 +182,8 @@ const TransactionFilters = ({ visible, onClose, filters, updateFilters }) => {
 
               {activeSubTab === 'categories' && (
                 <View style={styles.filterSection}>
-                  {renderCategories('income')}
-                  {renderCategories('expense')}
+                  {renderCategories('INCOME')}
+                  {renderCategories('EXPENSE')}
                 </View>
               )}
             </ScrollView>
@@ -253,20 +262,29 @@ const styles = StyleSheet.create({
   closeButton: {
     borderColor: colors.border,
   },
-  categoriesContainer: {
+  categorySection: {
     marginBottom: 24,
   },
-  categoryTypeTitle: {
+  categoryTitle: {
     marginBottom: 12,
     fontWeight: '500',
   },
-  chipContainer: {
+  categoriesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
   },
-  categoryChip: {
-    marginBottom: 4,
+  categoryButton: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 8,
+    padding: 8,
+    paddingHorizontal: 12,
+    backgroundColor: 'transparent',
+  },
+  categoryText: {
+    fontSize: 14,
+    color: colors.text,
   },
 });
 
