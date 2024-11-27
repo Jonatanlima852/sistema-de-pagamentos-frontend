@@ -180,6 +180,20 @@ const TransactionFilters = ({ visible, onClose, filters, updateFilters }) => {
 
             <Divider style={styles.divider} />
 
+            {activeSubTab === 'categories' && selectedCategories.length > 0 && (
+              <View style={styles.selectedCategoriesInfo}>
+                <Text variant="bodyMedium">
+                  Categorias selecionadas: {selectedCategories.length}
+                </Text>
+                <Text variant="bodySmall" style={styles.selectedCategoriesNames}>
+                  {categories
+                    .filter(cat => selectedCategories.includes(cat.id))
+                    .map(cat => cat.name)
+                    .join(', ')}
+                </Text>
+              </View>
+            )}
+
             <View style={styles.modalButtons}>
               <Button 
                 mode="contained" 
@@ -295,6 +309,16 @@ const styles = StyleSheet.create({
     padding: 8,
     paddingHorizontal: 12,
     backgroundColor: 'transparent',
+  },
+  selectedCategoriesInfo: {
+    padding: 16,
+    backgroundColor: `${colors.primary}10`,
+    borderRadius: 8,
+    marginTop: 16,
+  },
+  selectedCategoriesNames: {
+    marginTop: 4,
+    color: colors.primary,
   },
 });
 

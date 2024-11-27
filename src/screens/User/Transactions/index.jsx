@@ -47,6 +47,13 @@ const Transactions = () => {
       });
     }
 
+    // Aplicar filtro de categorias
+    if (filters.categories && filters.categories.length > 0) {
+      filtered = filtered.filter(transaction => 
+        filters.categories.includes(transaction.categoryId)
+      );
+    }
+
     // Aplicar filtro de data
     if (filters.startDate || filters.endDate) {
       filtered = filtered.filter(transaction => {
