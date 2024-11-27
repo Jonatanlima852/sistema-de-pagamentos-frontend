@@ -32,11 +32,6 @@ const SettingsStack = () => {
         options={{ title: 'Minhas Contas' }}
       />
       <Stack.Screen 
-        name="Limits" 
-        component={Limits}
-        options={{ title: 'Meus Limites' }}
-      />
-      <Stack.Screen 
         name="Preferences" 
         component={Preferences}
         options={{ title: 'Configurações' }}
