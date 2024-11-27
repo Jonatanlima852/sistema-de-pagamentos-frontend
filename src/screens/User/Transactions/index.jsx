@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { View, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { Searchbar, Button } from 'react-native-paper';
 import SafeScreen from '../../../components/SafeScreen';
 import TransactionList from './TransactionList';
@@ -21,20 +21,52 @@ const Transactions = () => {
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredTransactions = useMemo(() => {
-    if (!searchQuery.trim()) {
-      return transactions;
+    let filtered = [...transactions];
+
+    // Aplicar filtro de busca
+    if (searchQuery.trim()) {
+      const searchLower = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter(transaction => {
+        const descriptionMatch = transaction.description?.toLowerCase().includes(searchLower);
+        const categoryMatch = transaction.category?.name?.toLowerCase().includes(searchLower);
+        const accountMatch = transaction.account?.name?.toLowerCase().includes(searchLower);
+        const amountMatch = transaction.amount?.toString().includes(searchLower);
+        return descriptionMatch || categoryMatch || accountMatch || amountMatch;
+      });
     }
 
-    const searchLower = searchQuery.toLowerCase().trim();
-    return transactions.filter(transaction => {
-      const descriptionMatch = transaction.description?.toLowerCase().includes(searchLower);
-      const categoryMatch = transaction.category?.name?.toLowerCase().includes(searchLower);
-      const accountMatch = transaction.account?.name?.toLowerCase().includes(searchLower);
-      const amountMatch = transaction.amount?.toString().includes(searchLower);
+    // Aplicar filtro de tipo de transação
+    if (filters.transactionType && filters.transactionType !== 'all') {
+      filtered = filtered.filter(transaction => {
+        if (filters.transactionType === 'income') {
+          return transaction.type === 'INCOME';
+        } else if (filters.transactionType === 'expense') {
+          return transaction.type === 'EXPENSE';
+        }
+        return true;
+      });
+    }
 
-      return descriptionMatch || categoryMatch || accountMatch || amountMatch;
-    });
-  }, [transactions, searchQuery]);
+    // Aplicar filtro de data
+    if (filters.startDate || filters.endDate) {
+      filtered = filtered.filter(transaction => {
+        const transactionDate = new Date(transaction.date);
+        const startDate = filters.startDate ? new Date(filters.startDate) : null;
+        const endDate = filters.endDate ? new Date(filters.endDate) : null;
+
+        if (startDate && endDate) {
+          return transactionDate >= startDate && transactionDate <= endDate;
+        } else if (startDate) {
+          return transactionDate >= startDate;
+        } else if (endDate) {
+          return transactionDate <= endDate;
+        }
+        return true;
+      });
+    }
+
+    return filtered;
+  }, [transactions, searchQuery, filters]);
 
   const handleLoadMore = () => {
     if (!loading && pagination.hasMore) {

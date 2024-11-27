@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Modal, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Modal, StyleSheet, ScrollView } from 'react-native';
 import { Text, Button, SegmentedButtons, Divider, Portal, Chip } from 'react-native-paper';
 import TransactionTypeButtons from './TransactionTypeButtons';
 import CustomDatePicker from '../../../components/CustomDatePicker';
@@ -16,7 +16,6 @@ const TransactionFilters = ({ visible, onClose, filters, updateFilters }) => {
   const [showEndDatePicker, setShowEndDatePicker] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState(filters.categories || []);
 
-  console.log('categorias', categories);
   const handleApplyFilters = () => {
     updateFilters({
       ...filters,
@@ -41,51 +40,42 @@ const TransactionFilters = ({ visible, onClose, filters, updateFilters }) => {
     });
   };
 
-  const handleCategorySelection = (categoryId) => {
-    setSelectedCategories(prev => {
-      if (prev.includes(categoryId)) {
-        return prev.filter(id => id !== categoryId);
-      } else {
-        return [...prev, categoryId];
-      }
-    });
+  const toggleCategory = (categoryId) => {
+    setSelectedCategories(prev => 
+      prev.includes(categoryId)
+        ? prev.filter(id => id !== categoryId)
+        : [...prev, categoryId]
+    );
   };
 
   const renderCategories = (type) => {
-    const typeCategories = categories?.filter(cat => cat.type === type) || [];
-
+    const filteredCategories = categories.filter(cat => cat.type === type);
+    
     return (
-      <View style={styles.categorySection}>
-        <Text variant="titleMedium" style={styles.categoryTitle}>
+      <View style={styles.categoriesContainer}>
+        <Text variant="titleMedium" style={styles.categoryTypeTitle}>
           {type === 'INCOME' ? 'Receitas' : 'Despesas'}
         </Text>
-        <View style={styles.categoriesGrid}>
-          {typeCategories.map((category) => (
-            <TouchableOpacity
+        <View style={styles.chipContainer}>
+          {filteredCategories.map(category => (
+            <Chip
               key={category.id}
+              selected={selectedCategories.includes(category.id)}
+              onPress={() => toggleCategory(category.id)}
               style={[
-                styles.categoryButton,
+                styles.categoryChip,
                 selectedCategories.includes(category.id) && {
-                  backgroundColor: type === 'INCOME' 
-                    ? `${colors.success}20` 
-                    : `${colors.error}20`,
-                  borderColor: type === 'INCOME' ? colors.success : colors.error,
+                  backgroundColor: type === 'INCOME' ? `${colors.success}20` : `${colors.error}20`
                 }
               ]}
-              onPress={() => handleCategorySelection(category.id)}
+              textStyle={{
+                color: selectedCategories.includes(category.id)
+                  ? (type === 'INCOME' ? colors.success : colors.error)
+                  : colors.text
+              }}
             >
-              <Text
-                style={[
-                  styles.categoryText,
-                  selectedCategories.includes(category.id) && {
-                    color: type === 'INCOME' ? colors.success : colors.error,
-                    fontWeight: '500'
-                  }
-                ]}
-              >
-                {category.name}
-              </Text>
-            </TouchableOpacity>
+              {category.name}
+            </Chip>
           ))}
         </View>
       </View>
@@ -285,6 +275,26 @@ const styles = StyleSheet.create({
   categoryText: {
     fontSize: 14,
     color: colors.text,
+  },
+  categoriesContainer: {
+    marginBottom: 24,
+  },
+  categoryTypeTitle: {
+    marginBottom: 12,
+    fontWeight: '500',
+  },
+  chipContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  categoryChip: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 8,
+    padding: 8,
+    paddingHorizontal: 12,
+    backgroundColor: 'transparent',
   },
 });
 
