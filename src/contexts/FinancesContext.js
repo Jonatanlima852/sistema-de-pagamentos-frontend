@@ -73,6 +73,33 @@ export const FinancesProvider = ({ children }) => {
     }
   }, []);
 
+  const updateAccount = useCallback(async (id, accountData) => {
+    try {
+      const updatedAccount = await financesService.updateAccount(id, accountData);
+      setAccounts(current => 
+        current.map(account => 
+          account.id === id ? updatedAccount : account
+        )
+      );
+      return updatedAccount;
+    } catch (error) {
+      console.error('Erro ao atualizar conta:', error);
+      throw error;
+    }
+  }, []);
+
+  const deleteAccount = useCallback(async (id) => {
+    try {
+      await financesService.deleteAccount(id);
+      setAccounts(current => 
+        current.filter(account => account.id !== id)
+      );
+    } catch (error) {
+      console.error('Erro ao deletar conta:', error);
+      throw error;
+    }
+  }, []);
+
   // Categories
   const loadCategories = useCallback(async () => {
     try {
@@ -94,6 +121,33 @@ export const FinancesProvider = ({ children }) => {
       return newCategory;
     } catch (error) {
       console.error('Erro ao criar categoria:', error);
+      throw error;
+    }
+  }, []);
+
+  const updateCategory = useCallback(async (id, categoryData) => {
+    try {
+      const updatedCategory = await financesService.updateCategory(id, categoryData);
+      setCategories(current => 
+        current.map(category => 
+          category.id === id ? updatedCategory : category
+        )
+      );
+      return updatedCategory;
+    } catch (error) {
+      console.error('Erro ao atualizar categoria:', error);
+      throw error;
+    }
+  }, []);
+
+  const deleteCategory = useCallback(async (id) => {
+    try {
+      await financesService.deleteCategory(id);
+      setCategories(current => 
+        current.filter(category => category.id !== id)
+      );
+    } catch (error) {
+      console.error('Erro ao deletar categoria:', error);
       throw error;
     }
   }, []);
@@ -155,6 +209,33 @@ export const FinancesProvider = ({ children }) => {
     }
   }, []);
 
+  const updateTransaction = useCallback(async (id, transactionData) => {
+    try {
+      const updatedTransaction = await financesService.updateTransaction(id, transactionData);
+      setTransactions(current => 
+        current.map(transaction => 
+          transaction.id === id ? updatedTransaction : transaction
+        )
+      );
+      return updatedTransaction;
+    } catch (error) {
+      console.error('Erro ao atualizar transação:', error);
+      throw error;
+    }
+  }, []);
+
+  const deleteTransaction = useCallback(async (id) => {
+    try {
+      await financesService.deleteTransaction(id);
+      setTransactions(current => 
+        current.filter(transaction => transaction.id !== id)
+      );
+    } catch (error) {
+      console.error('Erro ao deletar transação:', error);
+      throw error;
+    }
+  }, []);
+
   const updateFilters = useCallback((newFilters) => {
     setFilters(prev => ({ ...prev, ...newFilters }));
     loadTransactions(true); // Recarrega com novos filtros
@@ -171,10 +252,16 @@ export const FinancesProvider = ({ children }) => {
         pagination,
         loadAccounts,
         addAccount,
+        updateAccount,
+        deleteAccount,
         loadCategories,
         addCategory,
+        updateCategory,
+        deleteCategory,
         loadTransactions,
         addTransaction,
+        updateTransaction,
+        deleteTransaction,
         updateFilters,
       }}
     >

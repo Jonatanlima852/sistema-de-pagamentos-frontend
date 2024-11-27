@@ -224,7 +224,7 @@ const TransactionDetailsModal = ({ visible, onDismiss, transaction, onUpdate, on
                                     style={styles.actionIcon}
                                 />
                             </View>
-                            <Text variant="titleLarge" style={styles.title}>Detalhes da Transação</Text>
+                            <Text variant="titleLarge" style={styles.title}>Detalhes</Text>
                             <IconButton
                                 icon="close"
                                 size={24}
@@ -237,15 +237,6 @@ const TransactionDetailsModal = ({ visible, onDismiss, transaction, onUpdate, on
                             showsVerticalScrollIndicator={false}
                             contentContainerStyle={styles.scrollContent}
                         >
-                            {!isEditing && (
-                                <View style={styles.iconContainer}>
-                                    <Icon
-                                        name={transaction.type.toUpperCase() === 'INCOME' ? 'arrow-up-circle' : 'arrow-down-circle'}
-                                        size={48}
-                                        color={themeColor}
-                                    />  
-                                </View>
-                            )}
 
                             <View style={styles.detailsContainer}>
                                 {renderField(
@@ -360,7 +351,7 @@ const styles = StyleSheet.create({
         gap: -8,
     },
     actionIcon: {
-        marginLeft: -8,
+        marginLeft: -4,
     },
     title: {
         textAlign: 'center',
@@ -368,7 +359,7 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     closeIcon: {
-        marginRight: -8,
+        marginRight: 8,
     },
     editIcon: {
         marginLeft: -8,
