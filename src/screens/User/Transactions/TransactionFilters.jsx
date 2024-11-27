@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Modal, StyleSheet } from 'react-native';
 import { Text, Button, SegmentedButtons } from 'react-native-paper';
 import TransactionTypeButtons from './TransactionTypeButtons';
-import DateSelector from './DateSelector';
+import DateSelector from '../../../components/DateSelector';
 
 const TransactionFilters = ({ visible, onClose, filters, updateFilters }) => {
   const [activeSubTab, setActiveSubTab] = useState('details');

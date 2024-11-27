@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
-import { List, Divider } from 'react-native-paper';
+import { List, Divider, Text } from 'react-native-paper';
 import { colors } from '../../../theme';
 import SafeScreen from '../../../components/SafeScreen';
 import { useAuth } from '../../../hooks/useAuth';
@@ -53,6 +53,7 @@ const Settings = ({ navigation }) => {
   return (
     <SafeScreen>
       <ScrollView style={styles.container}>
+        <Text variant="headlineSmall" style={styles.title}>Configurações</Text>
         <List.Section>
           {settingsItems.map((item, index) => (
             <React.Fragment key={item.route || item.title}>
@@ -89,7 +90,14 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   itemTitle: {
-    fontSize: 16,
+    fontSize: 18,
+  },
+  title: {
+    margin: 28,
+    color: colors.text,
+    fontWeight: '700',
+    textAlign: 'center',
+    fontSize: 28
   },
 });
 

@@ -367,10 +367,15 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 16,
+    alignItems: "center",
+    paddingTop: 28
   },
   title: {
     marginBottom: 24,
     color: colors.text,
+    alignItems: "center",
+    fontWeight: '700',
+    fontSize: 28
   },
   card: {
     marginBottom: 16,

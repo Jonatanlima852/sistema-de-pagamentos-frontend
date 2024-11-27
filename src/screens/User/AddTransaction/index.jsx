@@ -308,15 +308,16 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 16,
+    paddingTop: 28
   },
   titleContainer: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 0,
   },
   title: {
     marginBottom: 24,
     color: colors.text,
-    fontWeight: 'bold',
+    fontWeight: '700',
     textAlign: 'center',
   },
   titleUnderline: {
