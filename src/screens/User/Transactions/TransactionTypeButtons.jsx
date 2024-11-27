@@ -1,35 +1,53 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Button, Text } from 'react-native-paper';
+import { Button } from 'react-native-paper';
+import { colors } from '../../../theme';
 
 const TransactionTypeButtons = ({ selectedType, onTypeChange }) => {
-  const buttons = [
-    { label: 'Todos', value: 'all' },
-    { label: 'Despesa', value: 'expense' },
-    { label: 'Receita', value: 'income' },
-  ];
-
   return (
     <View style={styles.container}>
-      {buttons.map((button) => (
-        <Button
-        key={button.value}
-        mode={selectedType === button.value ? 'contained' : 'outlined'}
-        onPress={() => {
-            onTypeChange(button.value); // Atualiza o estado corretamente
-        }}
+      <Button
+        mode="outlined"
+        onPress={() => onTypeChange('all')}
         style={[
-            styles.button,
-            selectedType === button.value && styles.selectedButton, // Aplica estilo quando selecionado
+          styles.button,
+          {
+            backgroundColor: selectedType === 'all' ? `${colors.primary}15` : 'transparent',
+            borderColor: selectedType === 'all' ? colors.primary : colors.border,
+          }
         ]}
-        labelStyle={[
-            styles.buttonText,
-            selectedType === button.value && styles.selectedButtonText,
+        textColor={colors.primary}
+      >
+        Todos
+      </Button>
+      <Button
+        mode="outlined"
+        onPress={() => onTypeChange('income')}
+        style={[
+          styles.button,
+          {
+            backgroundColor: selectedType === 'income' ? `${colors.success}15` : 'transparent',
+            borderColor: selectedType === 'income' ? colors.success : colors.border,
+          }
         ]}
-        >
-        {button.label}
-        </Button>
-      ))}
+        textColor={colors.success}
+      >
+        Receitas
+      </Button>
+      <Button
+        mode="outlined"
+        onPress={() => onTypeChange('expense')}
+        style={[
+          styles.button,
+          {
+            backgroundColor: selectedType === 'expense' ? `${colors.error}15` : 'transparent',
+            borderColor: selectedType === 'expense' ? colors.error : colors.border,
+          }
+        ]}
+        textColor={colors.error}
+      >
+        Despesas
+      </Button>
     </View>
   );
 };
@@ -37,21 +55,11 @@ const TransactionTypeButtons = ({ selectedType, onTypeChange }) => {
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginVertical: 16,
+    gap: 8,
   },
   button: {
     flex: 1,
-    marginHorizontal: 4,
-  },
-  selectedButton: {
-    backgroundColor: '#6200ea', // Cor de fundo padrão para selecionado
-  },
-  buttonText: {
-    color: '#000',
-  },
-  selectedButtonText: {
-    color: '#fff', // Cor de texto quando selecionado
+    borderWidth: 1.5,
   },
 });
 
