@@ -1,10 +1,14 @@
-import React, { useState } from 'react';
-import { View, Modal, StyleSheet, ScrollView } from 'react-native';
-import { Text, Button, SegmentedButtons, Divider, Portal, Chip } from 'react-native-paper';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { View, StyleSheet, Dimensions } from 'react-native';
+import { Text, Button, SegmentedButtons, Divider, Chip } from 'react-native-paper';
 import TransactionTypeButtons from './TransactionTypeButtons';
 import CustomDatePicker from '../../../components/CustomDatePicker';
 import { colors } from '../../../theme';
 import { useFinances } from '../../../hooks/useFinances';
+import { Modalize } from 'react-native-modalize';
+import { Portal } from 'react-native-paper';
+import { ScrollView } from 'react-native-gesture-handler';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const TransactionFilters = ({ visible, onClose, filters, updateFilters }) => {
   const { categories } = useFinances();
@@ -15,9 +19,29 @@ const TransactionFilters = ({ visible, onClose, filters, updateFilters }) => {
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
   const [showEndDatePicker, setShowEndDatePicker] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState(filters.categories || []);
+  const insets = useSafeAreaInsets();
+  
+  // Referência para o Modalize
+  const modalizeRef = useRef(null);
+  
+  // Abrir/fechar o modal baseado na prop visible
+  useEffect(() => {
+    if (visible && modalizeRef.current) {
+      modalizeRef.current.open();
+    } else if (!visible && modalizeRef.current) {
+      modalizeRef.current.close();
+    }
+  }, [visible]);
+  
+  // Handle dismiss sem usar evento sintético diretamente
+  const handleDismiss = useCallback(() => {
+    onClose();
+  }, [onClose]);
 
   const handleApplyFilters = () => {
-    console.log('Categorias selecionadas:', selectedCategories);
+    const e = { persist: () => {} };
+    e.persist();
+    
     updateFilters({
       ...filters,
       transactionType,
@@ -25,10 +49,13 @@ const TransactionFilters = ({ visible, onClose, filters, updateFilters }) => {
       endDate,
       categories: selectedCategories,
     });
-    onClose();
+    handleDismiss();
   };
 
   const handleClearFilters = () => {
+    const e = { persist: () => {} };
+    e.persist();
+    
     setTransactionType('all');
     setStartDate(new Date());
     setEndDate(new Date());
@@ -42,6 +69,9 @@ const TransactionFilters = ({ visible, onClose, filters, updateFilters }) => {
   };
 
   const toggleCategory = (categoryId) => {
+    const e = { persist: () => {} };
+    e.persist();
+    
     setSelectedCategories(prev => 
       prev.includes(categoryId)
         ? prev.filter(id => id !== categoryId)
@@ -83,233 +113,249 @@ const TransactionFilters = ({ visible, onClose, filters, updateFilters }) => {
     );
   };
 
+  const modalHeight = Dimensions.get('window').height * 0.85;
+
   return (
     <Portal>
-      <Modal
-        visible={visible}
-        onRequestClose={onClose}
-        animationType="slide"
-        transparent
+      <Modalize
+        ref={modalizeRef}
+        modalHeight={modalHeight}
+        threshold={100}
+        velocity={840}
+        closeOnOverlayTap={true}
+        panGestureEnabled={true}
+        withHandle={true}
+        handlePosition="outside"
+        onClose={handleDismiss}
+        handleStyle={{ backgroundColor: colors.primary, width: 50, height: 5, marginTop: 30 }}
+        modalStyle={{
+          backgroundColor: colors.background,
+          borderTopLeftRadius: 24,
+          borderTopRightRadius: 24,
+        }}
+        overlayStyle={{ backgroundColor: 'rgba(0, 0, 0, 0.65)' }}
+        adjustToContentHeight={false}
+        HeaderComponent={
+          <View style={styles.modalHeader}>
+            <Text variant="titleLarge" style={styles.modalTitle}>Filtros de Transações</Text>
+            <Button 
+              mode="text" 
+              onPress={handleClearFilters}
+              textColor={colors.error}
+              style={styles.clearButton}
+            >
+              Limpar
+            </Button>
+          </View>
+        }
+        FooterComponent={
+          <View style={[styles.modalButtons, { paddingBottom: insets.bottom > 0 ? insets.bottom : 20 }]}>
+            <Button 
+              mode="contained" 
+              onPress={handleApplyFilters} 
+              style={styles.applyButton}
+            >
+              Aplicar Filtros
+            </Button>
+          </View>
+        }
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text variant="headlineSmall" style={styles.modalTitle}>Filtros</Text>
-              <Button 
-                mode="text" 
-                onPress={handleClearFilters}
-                textColor={colors.error}
-              >
-                Limpar
-              </Button>
-            </View>
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          <SegmentedButtons
+            value={activeSubTab}
+            onValueChange={(value) => {
+              const e = { persist: () => {} };
+              e.persist();
+              setActiveSubTab(value);
+            }}
+            buttons={[
+              { 
+                value: 'details', 
+                label: 'Detalhes',
+                icon: 'text-box-outline'
+              },
+              { 
+                value: 'categories', 
+                label: 'Categorias',
+                icon: 'shape-outline'
+              },
+            ]}
+            style={styles.segmentedButtons}
+          />
 
-            <Divider style={styles.divider} />
-
-            <ScrollView showsVerticalScrollIndicator={false}>
-              <SegmentedButtons
-                value={activeSubTab}
-                onValueChange={setActiveSubTab}
-                buttons={[
-                  { 
-                    value: 'details', 
-                    label: 'Detalhes',
-                    icon: 'text-box-outline'
-                  },
-                  { 
-                    value: 'categories', 
-                    label: 'Categorias',
-                    icon: 'shape-outline'
-                  },
-                ]}
-                style={styles.segmentedButtons}
+          {activeSubTab === 'details' && (
+            <View style={styles.filterSection}>
+              <Text variant="titleMedium" style={styles.sectionLabel}>
+                Tipo de Transação
+              </Text>
+              <TransactionTypeButtons
+                selectedType={transactionType}
+                onTypeChange={(type) => {
+                  const e = { persist: () => {} };
+                  e.persist();
+                  setTransactionType(type);
+                }}
               />
 
-              {activeSubTab === 'details' && (
-                <View style={styles.filterSection}>
-                  <Text variant="titleMedium" style={styles.sectionLabel}>
-                    Tipo de Transação
-                  </Text>
-                  <TransactionTypeButtons
-                    selectedType={transactionType}
-                    onTypeChange={setTransactionType}
-                  />
-
-                  <Text variant="titleMedium" style={[styles.sectionLabel, styles.dateLabel]}>
-                    Período
-                  </Text>
+              <Text variant="titleMedium" style={[styles.sectionLabel, styles.dateLabel]}>
+                Período
+              </Text>
+              
+              <CustomDatePicker
+                label="Data Inicial"
+                date={startDate}
+                showPicker={showStartDatePicker}
+                onPress={() => {
+                  const e = { persist: () => {} };
+                  e.persist();
+                  setShowStartDatePicker(true);
+                }}
+                onDateChange={(event, selectedDate) => {
+                  const dateEvent = event;
+                  dateEvent.persist && dateEvent.persist();
                   
-                  <CustomDatePicker
-                    label="Data Inicial"
-                    date={startDate}
-                    showPicker={showStartDatePicker}
-                    onPress={() => setShowStartDatePicker(true)}
-                    onDateChange={(event, selectedDate) => {
-                      setShowStartDatePicker(false);
-                      if (selectedDate) {
-                        setStartDate(selectedDate);
-                      }
-                    }}
-                    themeColor={colors.primary}
-                    maximumDate={endDate}
-                  />
+                  setShowStartDatePicker(false);
+                  if (selectedDate) {
+                    setStartDate(selectedDate);
+                  }
+                }}
+                themeColor={colors.primary}
+                maximumDate={endDate}
+              />
 
-                  <CustomDatePicker
-                    label="Data Final"
-                    date={endDate}
-                    showPicker={showEndDatePicker}
-                    onPress={() => setShowEndDatePicker(true)}
-                    onDateChange={(event, selectedDate) => {
-                      setShowEndDatePicker(false);
-                      if (selectedDate) {
-                        setEndDate(selectedDate);
-                      }
-                    }}
-                    themeColor={colors.primary}
-                    maximumDate={new Date()}
-                  />
-                </View>
-              )}
-
-              {activeSubTab === 'categories' && (
-                <View style={styles.filterSection}>
-                  {renderCategories('INCOME')}
-                  {renderCategories('EXPENSE')}
-                </View>
-              )}
-            </ScrollView>
-
-            <Divider style={styles.divider} />
-
-            {activeSubTab === 'categories' && selectedCategories.length > 0 && (
-              <View style={styles.selectedCategoriesInfo}>
-                <Text variant="bodyMedium">
-                  Categorias selecionadas: {selectedCategories.length}
-                </Text>
-                <Text variant="bodySmall" style={styles.selectedCategoriesNames}>
-                  {categories
-                    .filter(cat => selectedCategories.includes(cat.id))
-                    .map(cat => cat.name)
-                    .join(', ')}
-                </Text>
-              </View>
-            )}
-
-            <View style={styles.modalButtons}>
-              <Button 
-                mode="contained" 
-                onPress={handleApplyFilters} 
-                style={styles.applyButton}
-              >
-                Aplicar Filtros
-              </Button>
-              <Button 
-                mode="outlined" 
-                onPress={onClose} 
-                style={styles.closeButton}
-              >
-                Fechar
-              </Button>
+              <CustomDatePicker
+                label="Data Final"
+                date={endDate}
+                showPicker={showEndDatePicker}
+                onPress={() => {
+                  const e = { persist: () => {} };
+                  e.persist();
+                  setShowEndDatePicker(true);
+                }}
+                onDateChange={(event, selectedDate) => {
+                  const dateEvent = event;
+                  dateEvent.persist && dateEvent.persist();
+                  
+                  setShowEndDatePicker(false);
+                  if (selectedDate) {
+                    setEndDate(selectedDate);
+                  }
+                }}
+                themeColor={colors.primary}
+                maximumDate={new Date()}
+              />
             </View>
-          </View>
-        </View>
-      </Modal>
+          )}
+
+          {activeSubTab === 'categories' && (
+            <View style={styles.filterSection}>
+              {renderCategories('INCOME')}
+              {renderCategories('EXPENSE')}
+            </View>
+          )}
+
+          {activeSubTab === 'categories' && selectedCategories.length > 0 && (
+            <View style={styles.selectedCategoriesInfo}>
+              <Text variant="bodyMedium" style={styles.selectedCount}>
+                Categorias selecionadas: {selectedCategories.length}
+              </Text>
+              <Text variant="bodySmall" style={styles.selectedCategoriesNames}>
+                {categories
+                  .filter(cat => selectedCategories.includes(cat.id))
+                  .map(cat => cat.name)
+                  .join(', ')}
+              </Text>
+            </View>
+          )}
+        </ScrollView>
+      </Modalize>
     </Portal>
   );
 };
 
 const styles = StyleSheet.create({
-  modalOverlay: {
+  content: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: 'white',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    maxHeight: '90%',
+    paddingHorizontal: 20,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 12,
   },
   modalTitle: {
+    marginTop: 24,
     fontWeight: 'bold',
+    fontSize: 22,
   },
-  divider: {
-    height: 1,
-    backgroundColor: colors.border,
+  clearButton: {
+    marginRight: -8,
   },
   segmentedButtons: {
-    margin: 16,
+    marginVertical: 20,
   },
   filterSection: {
-    padding: 16,
-    paddingTop: 0,
+    paddingBottom: 24,
   },
   sectionLabel: {
-    marginBottom: 12,
-    fontWeight: '500',
+    marginBottom: 16,
+    fontWeight: '600',
+    fontSize: 18,
   },
   dateLabel: {
-    marginTop: 24,
+    marginTop: 30,
   },
   modalButtons: {
-    padding: 16,
-    gap: 8,
+    padding: 20,
+    paddingTop: 0,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0, 0, 0, 0.1)',
+    paddingTop: 20,
   },
   applyButton: {
-    marginBottom: 8,
-  },
-  closeButton: {
-    borderColor: colors.border,
-  },
-  categorySection: {
-    marginBottom: 24,
-  },
-  categoryTitle: {
-    marginBottom: 12,
-    fontWeight: '500',
-  },
-  categoriesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  categoryButton: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 8,
-    padding: 8,
-    paddingHorizontal: 12,
-    backgroundColor: 'transparent',
-  },
-  categoryText: {
-    fontSize: 14,
-    color: colors.text,
+    marginBottom: 0,
+    borderRadius: 12,
+    paddingVertical: 6,
+    height: 54,
   },
   categoriesContainer: {
-    marginBottom: 24,
+    marginBottom: 28,
   },
   categoryTypeTitle: {
     marginBottom: 12,
-    fontWeight: '500',
+    fontWeight: '600',
+    fontSize: 18,
   },
   chipContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 10,
   },
   categoryChip: {
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 8,
-    padding: 8,
-    paddingHorizontal: 12,
-    backgroundColor: 'transparent',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    marginBottom: 6,
+  },
+  selectedCategoriesInfo: {
+    padding: 16,
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    marginTop: 12,
+    marginBottom: 20,
+  },
+  selectedCount: {
+    fontWeight: '600',
+  },
+  selectedCategoriesNames: {
+    marginTop: 6,
+    color: colors.placeholder,
+    lineHeight: 20,
   },
 });
 

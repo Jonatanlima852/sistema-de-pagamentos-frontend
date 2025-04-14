@@ -1,12 +1,24 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, Modal, Pressable, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
-import { Text, IconButton, TextInput, Button } from 'react-native-paper';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { 
+  View, 
+  StyleSheet, 
+  KeyboardAvoidingView, 
+  Platform, 
+  Dimensions,
+  ActivityIndicator,
+  Alert
+} from 'react-native';
+import { Text, IconButton, TextInput, Button, Divider } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { colors } from '../../../theme';
 import { useFinances } from '../../../hooks/useFinances';
 import { currencyMask } from '../../../utils/masks';
 import CustomPicker from '../../../components/CustomPicker';
 import CustomDatePicker from '../../../components/CustomDatePicker';
+import { Modalize } from 'react-native-modalize';
+import { Portal } from 'react-native-paper';
+import { ScrollView } from 'react-native-gesture-handler';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const TransactionDetailsModal = ({ visible, onDismiss, transaction, onUpdate, onDelete }) => {
     const { accounts, categories } = useFinances();
@@ -15,8 +27,26 @@ const TransactionDetailsModal = ({ visible, onDismiss, transaction, onUpdate, on
     const [showCategoryPicker, setShowCategoryPicker] = useState(false);
     const [showAccountPicker, setShowAccountPicker] = useState(false);
     const [showDatePicker, setShowDatePicker] = useState(false);
+    const insets = useSafeAreaInsets();
+    
+    // Referência para o Modal
+    const modalizeRef = useRef(null);
+    
+    // Abrir/fechar o modal baseado na prop visible
+    useEffect(() => {
+        if (visible && modalizeRef.current) {
+            modalizeRef.current.open();
+        } else if (!visible && modalizeRef.current) {
+            modalizeRef.current.close();
+        }
+    }, [visible]);
 
-    React.useEffect(() => {
+    // Handle dismiss sem usar evento sintético diretamente
+    const handleDismiss = useCallback(() => {
+        onDismiss();
+    }, [onDismiss]);
+
+    useEffect(() => {
         if (transaction) {
             setEditedTransaction({
                 ...transaction,
@@ -30,7 +60,7 @@ const TransactionDetailsModal = ({ visible, onDismiss, transaction, onUpdate, on
         }
     }, [transaction]);
 
-    React.useEffect(() => {
+    useEffect(() => {
         if (!visible) {
             setIsEditing(false);
         }
@@ -101,10 +131,10 @@ const TransactionDetailsModal = ({ visible, onDismiss, transaction, onUpdate, on
                 },
                 {
                     text: 'Excluir',
-                    onPress: async () => {
+                    onPress: () => {
                         try {
-                            await onDelete(transaction.id);
-                            onDismiss();
+                            onDelete(transaction.id);
+                            handleDismiss();
                         } catch (error) {
                             console.error('Erro ao excluir transação:', error);
                             Alert.alert('Erro', 'Não foi possível excluir a transação. Tente novamente.');
@@ -142,16 +172,6 @@ const TransactionDetailsModal = ({ visible, onDismiss, transaction, onUpdate, on
             accountId: Number(transaction.accountId),
         });
     };
-
-    const renderEditButton = () => (
-        <IconButton
-            icon={isEditing ? "content-save" : "pencil"}
-            size={24}
-            iconColor={themeColor}
-            onPress={isEditing ? handleSave : handleStartEditing}
-            style={styles.editIcon}
-        />
-    );
 
     const renderField = (label, value, icon, editableField) => {
         if (isEditing && editableField) {
@@ -200,6 +220,9 @@ const TransactionDetailsModal = ({ visible, onDismiss, transaction, onUpdate, on
                             showPicker={showDatePicker}
                             onPress={() => setShowDatePicker(true)}
                             onDateChange={(event, selectedDate) => {
+                                const dateEvent = event;
+                                dateEvent.persist && dateEvent.persist();
+                                
                                 setShowDatePicker(false);
                                 if (selectedDate) {
                                     setEditedTransaction(prev => ({
@@ -253,7 +276,7 @@ const TransactionDetailsModal = ({ visible, onDismiss, transaction, onUpdate, on
         return (
             <View style={styles.detailRow}>
                 <View style={styles.labelContainer}>
-                    <Icon name={icon} size={20} color={themeColor} />
+                    <Icon name={icon} size={22} color={themeColor} />
                     <Text style={styles.label}>{label}</Text>
                 </View>
                 <Text style={styles.value}>{value}</Text>
@@ -261,158 +284,156 @@ const TransactionDetailsModal = ({ visible, onDismiss, transaction, onUpdate, on
         );
     };
 
+    const modalHeight = Dimensions.get('window').height * 0.85;
+
     return (
-        <Modal
-            visible={visible}
-            onRequestClose={onDismiss}
-            animationType="slide"
-            transparent={true}
-        >
-            <KeyboardAvoidingView 
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                style={{ flex: 1 }}
-            >
-                <View style={styles.modalOverlay}>
-                    <View style={styles.modalContent}>
-                        <View style={styles.header}>
-                            <View style={styles.headerActions}>
-                                <IconButton
-                                    icon={isEditing ? "content-save" : "pencil"}
-                                    size={24}
-                                    iconColor={themeColor}
-                                    onPress={isEditing ? handleSave : handleStartEditing}
-                                    style={styles.actionIcon}
-                                />
-                                <IconButton
-                                    icon="delete-outline"
-                                    size={24}
-                                    iconColor={colors.error}
-                                    onPress={handleDelete}
-                                    style={styles.actionIcon}
-                                />
-                            </View>
-                            <Text variant="titleLarge" style={styles.title}>Detalhes</Text>
+        <Portal>
+            <Modalize
+                ref={modalizeRef}
+                modalHeight={modalHeight}
+                threshold={100}
+                velocity={840}
+                closeOnOverlayTap={true}
+                panGestureEnabled={true}
+                withHandle={true}
+                handlePosition="outside"
+                onClose={handleDismiss}
+                handleStyle={{ backgroundColor: themeColor, width: 50, height: 5 }}
+                modalStyle={{
+                    backgroundColor: colors.background,
+                    borderTopLeftRadius: 24,
+                    borderTopRightRadius: 24,
+                }}
+                overlayStyle={{ backgroundColor: 'rgba(0, 0, 0, 0.65)' }}
+                adjustToContentHeight={false}
+                HeaderComponent={
+                    <View style={styles.header}>
+                        <View style={styles.headerActions}>
                             <IconButton
-                                icon="close"
+                                icon={isEditing ? "content-save" : "pencil"}
                                 size={24}
-                                onPress={onDismiss}
-                                style={styles.closeIcon}
+                                iconColor={themeColor}
+                                onPress={isEditing ? handleSave : handleStartEditing}
+                                style={styles.actionIcon}
+                            />
+                            <IconButton
+                                icon="delete-outline"
+                                size={24}
+                                iconColor={colors.error}
+                                onPress={handleDelete}
+                                style={styles.actionIcon}
                             />
                         </View>
-
-                        <ScrollView 
-                            showsVerticalScrollIndicator={false}
-                            contentContainerStyle={styles.scrollContent}
-                        >
-
-                            <View style={styles.detailsContainer}>
-                                {renderField(
-                                    'Valor',
-                                    formatCurrency(transaction.amount),
-                                    'cash',
-                                    'amount'
-                                )}
-
-                                {renderField(
-                                    'Descrição',
-                                    transaction.description,
-                                    'text-box-outline',
-                                    'description'
-                                )}
-
-                                {renderField(
-                                    'Data',
-                                    formatDate(transaction.date),
-                                    'calendar',
-                                    'date'
-                                )}
-
-                                {category && renderField(
-                                    'Categoria',
-                                    category.name,
-                                    'tag-outline',
-                                    'categoryId'
-                                )}
-
-                                {account && renderField(
-                                    'Conta',
-                                    account.name,
-                                    'bank-outline',
-                                    'accountId'
-                                )}
-
-                                {transaction.notes && renderField(
-                                    'Observações',
-                                    transaction.notes,
-                                    'note-text-outline',
-                                    'notes'
-                                )}
-                            </View>
-
-                            {isEditing && (
-                                <View style={styles.buttonContainer}>
-                                    <Button
-                                        mode="contained"
-                                        onPress={handleSave}
-                                        style={[styles.button, { backgroundColor: themeColor }]}
-                                    >
-                                        Salvar Alterações
-                                    </Button>
-                                    <Button
-                                        mode="outlined"
-                                        onPress={handleCancel}
-                                        style={styles.cancelButton}
-                                    >
-                                        Cancelar
-                                    </Button>
-                                </View>
-                            )}
-
-                            {!isEditing && (
-                                <View style={styles.buttonContainer}>
-                                    <Pressable
-                                        onPress={onDismiss}
-                                        style={({ pressed }) => [
-                                            styles.closeButton,
-                                            { backgroundColor: pressed ? `${themeColor}15` : 'transparent' }
-                                        ]}
-                                    >
-                                        <Text style={[styles.closeButtonText, { color: themeColor }]}>Fechar</Text>
-                                    </Pressable>
-                                </View>
-                            )}
-                        </ScrollView>
+                        <Text variant="titleLarge" style={styles.title}>Detalhes da Transação</Text>
+                        <View style={styles.actionSpace} />
                     </View>
-                </View>
-            </KeyboardAvoidingView>
-        </Modal>
+                }
+            >
+                <KeyboardAvoidingView
+                    behavior={Platform.OS === "ios" ? "padding" : "height"}
+                    style={styles.content}
+                >
+                    <ScrollView 
+                        showsVerticalScrollIndicator={false}
+                        contentContainerStyle={[
+                            styles.scrollContent, 
+                            { paddingBottom: insets.bottom + 20 }
+                        ]}
+                    >
+                        <View style={styles.detailsContainer}>
+                            {renderField(
+                                'Valor',
+                                formatCurrency(transaction.amount),
+                                'cash',
+                                'amount'
+                            )}
+
+                            {renderField(
+                                'Descrição',
+                                transaction.description,
+                                'text-box-outline',
+                                'description'
+                            )}
+
+                            {renderField(
+                                'Data',
+                                formatDate(transaction.date),
+                                'calendar',
+                                'date'
+                            )}
+
+                            {category && renderField(
+                                'Categoria',
+                                category.name,
+                                'tag-outline',
+                                'categoryId'
+                            )}
+
+                            {account && renderField(
+                                'Conta',
+                                account.name,
+                                'bank-outline',
+                                'accountId'
+                            )}
+
+                            {transaction.notes && renderField(
+                                'Observações',
+                                transaction.notes,
+                                'note-text-outline',
+                                'notes'
+                            )}
+                        </View>
+
+                        <Divider style={styles.divider} />
+
+                        {isEditing && (
+                            <View style={styles.buttonContainer}>
+                                <Button
+                                    mode="contained"
+                                    onPress={handleSave}
+                                    style={[styles.button, { backgroundColor: themeColor }]}
+                                >
+                                    Salvar Alterações
+                                </Button>
+                                <Button
+                                    mode="outlined"
+                                    onPress={handleCancel}
+                                    style={styles.cancelButton}
+                                >
+                                    Cancelar
+                                </Button>
+                            </View>
+                        )}
+                    </ScrollView>
+                </KeyboardAvoidingView>
+            </Modalize>
+        </Portal>
     );
 };
 
 const styles = StyleSheet.create({
-    modalOverlay: {
+    content: {
         flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        justifyContent: 'flex-end',
     },
-    modalContent: {
-        backgroundColor: colors.background,
-        padding: 20,
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
-        minHeight: '70%',
+    scrollContent: {
+        paddingHorizontal: 24,
+        paddingTop: 0,
     },
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 20,
-        paddingHorizontal: 8,
+        marginBottom: 12,
+        paddingHorizontal: 16,
+        paddingTop: 16,
     },
     headerActions: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: -8,
+        width: 80,
+    },
+    actionSpace: {
+        width: 80,
     },
     actionIcon: {
         marginLeft: -4,
@@ -421,16 +442,8 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         color: colors.text,
         flex: 1,
-    },
-    closeIcon: {
-        marginRight: 8,
-    },
-    editIcon: {
-        marginLeft: -8,
-    },
-    iconContainer: {
-        alignItems: 'center',
-        marginBottom: 24,
+        fontWeight: 'bold',
+        fontSize: 18,
     },
     divider: {
         height: 1,
@@ -439,6 +452,7 @@ const styles = StyleSheet.create({
     },
     detailsContainer: {
         gap: 24,
+        marginTop: 16,
     },
     detailRow: {
         minHeight: 54,
@@ -447,48 +461,41 @@ const styles = StyleSheet.create({
     labelContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 8,
-        marginBottom: 4,
+        gap: 10,
+        marginBottom: 6,
     },
     label: {
-        fontSize: 14,
+        fontSize: 16,
         color: colors.text,
         opacity: 0.7,
     },
     value: {
-        fontSize: 16,
+        fontSize: 18,
         color: colors.text,
-        paddingLeft: 28,
-        marginTop: 4,
+        paddingLeft: 32,
+        marginTop: 6,
+        fontWeight: '500',
     },
     buttonContainer: {
-        marginTop: 32,
-    },
-    closeButton: {
-        paddingVertical: 12,
-        borderRadius: 8,
-        alignItems: 'center',
-    },
-    closeButtonText: {
-        fontSize: 16,
-        fontWeight: '500',
+        marginVertical: 20,
+        gap: 16,
     },
     input: {
         backgroundColor: colors.background,
-        marginLeft: 28,
-        height: 40,
-    },
-    buttonContainer: {
-        marginTop: 32,
-        gap: 8,
+        marginLeft: 32,
+        marginTop: 4,
+        height: 48,
+        fontSize: 18,
     },
     button: {
-        borderRadius: 8,
+        borderRadius: 12,
+        paddingVertical: 8,
+        height: 54,
     },
     cancelButton: {
         borderColor: colors.text,
-        borderWidth: 1,
-        borderRadius: 8,
+        borderWidth: 1.5,
+        borderRadius: 12,
         backgroundColor: colors.surface,
         textColor: colors.text,
     },

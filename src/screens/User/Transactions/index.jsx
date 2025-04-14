@@ -81,6 +81,10 @@ const Transactions = () => {
     }
   };
 
+  const handleCloseFilters = () => {
+    setFilterVisible(false);
+  };
+
   return (
     <SafeScreen>
       <View style={styles.container}>
@@ -108,7 +112,7 @@ const Transactions = () => {
 
         <TransactionFilters
           visible={filterVisible}
-          onClose={() => setFilterVisible(false)}
+          onClose={handleCloseFilters}
           filters={filters}
           updateFilters={updateFilters}
         />

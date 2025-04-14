@@ -1,8 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { View, StyleSheet, ScrollView, Pressable, ActivityIndicator, Animated, Modal, Button, Platform } from 'react-native';
-import { Text, TextInput, SegmentedButtons, List } from 'react-native-paper';
-import { Picker } from '@react-native-picker/picker';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import { View, StyleSheet, ScrollView, Pressable, ActivityIndicator, Animated } from 'react-native';
+import { Text, TextInput, SegmentedButtons } from 'react-native-paper';
 import { colors } from '../../../theme';
 import SafeScreen from '../../../components/SafeScreen';
 import { useFinances } from '../../../hooks/useFinances';
@@ -108,6 +106,7 @@ const AddTransaction = () => {
 
   // Memoize os callbacks de dismiss
   const handleDismissAccountModal = useCallback(() => {
+    console.log('[AddTransaction] Closing account modal');
     setShowAddAccountModal(false);
   }, []);
 
@@ -121,6 +120,12 @@ const AddTransaction = () => {
 
   const getCategoryDisplayValue = (categoryId) => {
     return filteredCategories.find(cat => cat.id.toString() === categoryId)?.name;
+  };
+
+  // Function to handle account button press
+  const handleOpenAccountModal = () => {
+    console.log('[AddTransaction] Opening account modal');
+    setShowAddAccountModal(true);
   };
 
   return (
@@ -262,7 +267,7 @@ const AddTransaction = () => {
 
           <View style={styles.bottomActions}>
             <Pressable
-              onPress={() => setShowAddAccountModal(true)}
+              onPress={handleOpenAccountModal}
               style={styles.actionButton}
             >
               <Icon name="bank-plus" size={24} color={themeColor} />
@@ -272,7 +277,10 @@ const AddTransaction = () => {
             </Pressable>
 
             <Pressable
-              onPress={() => setShowAddCategoryModal(true)}
+              onPress={() => {
+                console.log('[AddTransaction] Opening category modal');
+                setShowAddCategoryModal(true);
+              }}
               style={styles.actionButton}
             >
               <Icon name="shape-plus" size={24} color={themeColor} />
@@ -281,10 +289,15 @@ const AddTransaction = () => {
               </Text>
             </Pressable>
           </View>
-
         </View>
       </ScrollView>
 
+      {/* Debug Information */}
+      <Text style={styles.debugText}>
+        Show Account Modal: {showAddAccountModal ? 'true' : 'false'}
+      </Text>
+
+      {/* Bottom Sheets */}
       <AddAccountModal
         visible={showAddAccountModal}
         onDismiss={handleDismissAccountModal}
@@ -407,58 +420,15 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '500',
   },
-  modalContainer: {
-    backgroundColor: colors.background,
-    padding: 20,
-    margin: 20,
-    borderRadius: 8,
-  },
-  pickerButton: {
-    borderWidth: 2,
-    borderRadius: 8,
-    height: 54,
-    justifyContent: 'center',
-    paddingHorizontal: 16,
-    backgroundColor: colors.background,
-  },
-  pickerButtonText: {
-    fontSize: 16,
-  },
-  iosPickerModal: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  iosPickerContainer: {
-    backgroundColor: colors.background,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    maxHeight: '70%',
-    paddingBottom: 20,
-  },
-  iosPickerHeader: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.outline,
-  },
-  iosPickerItem: {
-    paddingVertical: 12,
-  },
-  iosPickerItemSelected: {
-    backgroundColor: `${colors.primary}10`,
-  },
-  iosPickerItemText: {
-    fontSize: 16,
-  },
-  closeButton: {
-    padding: 8,
-    paddingHorizontal: 16,
-  },
-  closeButtonText: {
-    fontSize: 16,
-    fontWeight: '500',
+  debugText: {
+    position: 'absolute',
+    bottom: 10,
+    right: 10,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    color: 'white',
+    padding: 5,
+    borderRadius: 5,
+    fontSize: 10,
   },
 });
 

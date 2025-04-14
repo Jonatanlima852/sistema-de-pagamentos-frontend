@@ -7,6 +7,8 @@ import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { useCallback } from 'react';
 import { AuthProvider } from './src/contexts/AuthContext';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 
 import {
   MaterialCommunityIcons,
@@ -26,6 +28,8 @@ import {
 } from '@expo/vector-icons';
 
 SplashScreen.preventAutoHideAsync();
+
+console.log('[App] Iniciando o aplicativo');
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -47,21 +51,28 @@ export default function App() {
 
   const onLayoutRootView = useCallback(async () => {
     if (fontsLoaded) {
+      console.log('[App] Fontes carregadas, escondendo SplashScreen');
       await SplashScreen.hideAsync();
     }
   }, [fontsLoaded]);
 
   if (!fontsLoaded) {
+    console.log('[App] Fontes ainda não carregadas');
     return null;
   }
 
+  console.log('[App] Renderizando aplicativo com providers');
   return (
-    <PaperProvider theme={theme}>
-      <NavigationContainer onReady={onLayoutRootView}>
-        <AuthProvider>
-          <Routes />
-        </AuthProvider>
-      </NavigationContainer>
-    </PaperProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <PaperProvider theme={theme}>
+        <NavigationContainer onReady={onLayoutRootView}>
+          <AuthProvider>
+            <BottomSheetModalProvider>
+              <Routes />
+            </BottomSheetModalProvider>
+          </AuthProvider>
+        </NavigationContainer>
+      </PaperProvider>
+    </GestureHandlerRootView>
   );
 }
