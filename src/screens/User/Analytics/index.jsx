@@ -163,6 +163,27 @@ const Analytics = () => {
         <View style={styles.content}>
           <Text variant="headlineSmall" style={styles.title}>Análise Financeira</Text>
 
+          {/* Gráfico de Previsão de gasto */}
+          <Card style={styles.card}>
+            <Card.Content>
+              <Text variant="titleMedium" style={{ marginBottom: 8 }}>📊 Previsão de Gastos e Lucros</Text>
+              <Text style={styles.paragraph}>
+                Com base na média dos seus gastos dos últimos 3 meses, você deve gastar <Text style={{ color: '#C62828', fontWeight: 'bold' }}>R$ 2.400</Text> no próximo mês.
+              </Text>
+              <Text style={styles.paragraph}>
+                Com base na média dos seus ganhos, você deve lucrar <Text style={{ color: '#2E7D32', fontWeight: 'bold' }}>R$ 1.000</Text> no próximo mês.
+              </Text>
+              <Text style={styles.paragraph}>
+                <Text style={{ fontWeight: 'bold' }}>Saldo previsto: </Text>
+                <Text style={{ color: '#C62828', fontWeight: 'bold' }}>R$ -1.400</Text>
+              </Text>
+              <Text style={styles.paragraph}>
+                Sugestão: tente reduzir seus gastos com <Text style={{ fontWeight: 'bold' }}>Joguei no bixo</Text> e <Text style={{ fontWeight: 'bold' }}>Compras de início de mês</Text>.
+              </Text>
+            </Card.Content>
+          </Card>
+
+
           {/* Gráfico de Despesas por Categoria */}
           <Card style={styles.card}>
             <Card.Content>
@@ -387,6 +408,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     borderRadius: 12,
   },
+  bullet: {
+    marginLeft: 8,
+    marginBottom: 4,
+    color: colors.text,
+    fontSize: 14
+  },  
 });
 
 export default Analytics; 

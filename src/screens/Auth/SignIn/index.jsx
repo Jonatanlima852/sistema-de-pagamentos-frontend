@@ -12,13 +12,29 @@ const SignIn = ({ navigation }) => {
     const { signIn } = useAuth();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [emailError, setEmailError] = useState("");
+    const [passwordError, setPasswordError] = useState("");
     const [secureTextEntry, setSecureTextEntry] = useState(true);
 
     const handleSignIn = async () => {
+        setEmailError("");
+        setPasswordError("");
+
         try {
             await signIn(email, password);
         } catch (error) {
-            console.error(error);
+            console.error("Erro no login:", error);
+
+            if (error?.response?.data?.errors) {
+                error.response.data.errors.forEach(err => {
+                    if (err.path === "email") {
+                        setEmailError(err.msg);
+                    }
+                    if (err.path === "password") {
+                        setPasswordError(err.msg);
+                    }
+                });
+            }
         }
     };
 
@@ -55,7 +71,14 @@ const SignIn = ({ navigation }) => {
                     }
                 />
 
-                <TouchableOpacity 
+                {(emailError || passwordError) && (
+                    <View style={styles.errorContainer}>
+                        {emailError ? <Text style={styles.errorText}>• {emailError}</Text> : null}
+                        {passwordError ? <Text style={styles.errorText}>• {passwordError}</Text> : null}
+                    </View>
+                )}
+
+                <TouchableOpacity
                     onPress={() => {/* Navegação para recuperação de senha */}}
                     style={styles.forgotPassword}
                 >
@@ -78,7 +101,7 @@ const SignIn = ({ navigation }) => {
                     <Divider style={styles.divider} />
                 </View>
 
-                <TouchableOpacity 
+                <TouchableOpacity
                     onPress={() => navigation.navigate('SignUp')}
                     style={styles.registerContainer}
                 >
@@ -90,7 +113,7 @@ const SignIn = ({ navigation }) => {
             </View>
         </View>
     );
-}
+};
 
 export default SignIn;
 
@@ -149,5 +172,17 @@ const styles = StyleSheet.create({
     registerText: {
         fontWeight: 'bold',
     },
+    errorContainer: {
+        backgroundColor: '#ffe6e6',
+        borderColor: '#ff4d4d',
+        borderWidth: 1,
+        borderRadius: 8,
+        padding: 10,
+        marginBottom: 16,
+    },
+    errorText: {
+        color: '#ff1a1a',
+        fontSize: 14,
+        textAlign: 'left',
+    },
 });
-

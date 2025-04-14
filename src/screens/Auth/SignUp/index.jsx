@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Alert } from 'react-native';
 import {
     View,
     StyleSheet,
@@ -32,13 +33,21 @@ const SignUp = ({ navigation }) => {
     const handleSignUp = async () => {
         if (password !== confirmPassword) {
             setError("As senhas não correspondem");
+            //Alert.alert("Erro", "As senhas não correspondem");
             return;
         }
-
+    
         try {
             await signUp(username, email, password);
         } catch (error) {
-            console.error(error);
+            console.error("Erro ao criar conta:", error);
+            if (error?.response?.data?.errors) {
+                const messages = error.response.data.errors.map(err => `• ${err.msg}`).join('\n');
+                //Alert.alert("Erro de validação", messages);
+                setError(messages);
+            } else {
+                //Alert.alert("Erro", "Ocorreu um erro inesperado. Tente novamente.");
+            }
         }
     };
 
