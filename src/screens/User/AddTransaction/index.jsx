@@ -11,15 +11,26 @@ import AddAccountModal from './AddAccountModal';
 import AddCategoryModal from './AddCategoryModal';
 import CustomDatePicker from '../../../components/CustomDatePicker';
 import CustomPicker from '../../../components/CustomPicker';
+import TagSelector from '../../../components/TagSelector';
 
 const AddTransaction = () => {
-  const { loading, error, categories = [], accounts = [], addTransaction } = useFinances();
+  const { 
+    loading, 
+    error, 
+    categories = [], 
+    accounts = [], 
+    tags = [],
+    addTransaction, 
+    addTag 
+  } = useFinances();
+  
   const [transactionType, setTransactionType] = useState('EXPENSE');
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('');
   const [account, setAccount] = useState('');
   const [date, setDate] = useState(new Date());
+  const [selectedTags, setSelectedTags] = useState([]);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [themeColor, setThemeColor] = useState(colors.expense);
   const [showSuccessAnimation] = useState(new Animated.Value(0));
@@ -50,6 +61,7 @@ const AddTransaction = () => {
     setDescription('');
     setCategory('');
     setAccount('');
+    setSelectedTags([]);
     setDate(new Date());
     setTransactionType('EXPENSE');
   };
@@ -80,7 +92,8 @@ const AddTransaction = () => {
         date: date.toISOString(),
         categoryId: parseInt(category),
         accountId: parseInt(account),
-        isRecurring: false
+        isRecurring: false,
+        tags: selectedTags.map(tag => tag.id) // Envia apenas os IDs das tags
       };
 
       const response = await addTransaction(transactionData);
@@ -126,6 +139,21 @@ const AddTransaction = () => {
   const handleOpenAccountModal = () => {
     console.log('[AddTransaction] Opening account modal');
     setShowAddAccountModal(true);
+  };
+
+  // Função para criar uma nova tag
+  const handleCreateTag = async (name) => {
+    try {
+      return await addTag(name);
+    } catch (error) {
+      Toast.show({
+        type: 'error',
+        text1: 'Erro',
+        text2: 'Não foi possível criar a tag',
+      });
+      console.error('Erro ao criar tag:', error);
+      return null;
+    }
   };
 
   return (
@@ -236,6 +264,14 @@ const AddTransaction = () => {
             getDisplayValue={getCategoryDisplayValue}
           />
 
+          <TagSelector
+            selectedTags={selectedTags}
+            onTagsChange={setSelectedTags}
+            availableTags={tags}
+            onCreateTag={handleCreateTag}
+            themeColor={themeColor}
+          />
+
           <Pressable
             onPress={handleAddTransaction}
             disabled={loading || !isFormValid}
@@ -292,10 +328,6 @@ const AddTransaction = () => {
         </View>
       </ScrollView>
 
-      {/* Debug Information */}
-      <Text style={styles.debugText}>
-        Show Account Modal: {showAddAccountModal ? 'true' : 'false'}
-      </Text>
 
       {/* Bottom Sheets */}
       <AddAccountModal

@@ -12,6 +12,14 @@ const CustomDatePicker = ({
   themeColor,
   maximumDate 
 }) => {
+  // Função que persiste o evento antes de chamar o callback
+  const handleDateChange = (event, selectedDate) => {
+    if (event && event.persist) {
+      event.persist();
+    }
+    onDateChange(event, selectedDate);
+  };
+
   return (
     <View style={styles.pickerWrapper}>
       <Text style={styles.pickerLabel}>{label}</Text>
@@ -36,7 +44,7 @@ const CustomDatePicker = ({
           value={date}
           mode="date"
           display="default"
-          onChange={onDateChange}
+          onChange={handleDateChange}
           maximumDate={maximumDate}
         />
       )}

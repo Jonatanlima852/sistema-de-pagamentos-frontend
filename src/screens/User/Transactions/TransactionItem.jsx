@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, Alert } from 'react-native';
-import { Text } from 'react-native-paper';
+import { Text, Chip } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { colors } from '../../../theme';
 import TransactionDetailsModal from './TransactionDetailsModal';
@@ -41,6 +41,8 @@ const TransactionItem = ({ item }) => {
     }
   };
 
+  const themeColor = item.type.toUpperCase() === 'INCOME' ? colors.income : colors.expense;
+
   return (
     <>
       <TouchableOpacity onPress={() => setVisible(true)}>
@@ -49,7 +51,7 @@ const TransactionItem = ({ item }) => {
             <Icon 
               name={item.type.toUpperCase() === 'INCOME' ? 'arrow-up-circle' : 'arrow-down-circle'} 
               size={24} 
-              color={item.type.toUpperCase() === 'INCOME' ? colors.income : colors.expense}
+              color={themeColor}
             />
             <View style={styles.transactionInfo}>
               <Text variant="titleMedium" style={styles.description}>
@@ -58,13 +60,37 @@ const TransactionItem = ({ item }) => {
               <Text variant="bodyMedium" style={styles.date}>
                 {formatDate(item.date)}
               </Text>
+              
+              {item.tags && item.tags.length > 0 && (
+                <View style={styles.tagsContainer}>
+                  {item.tags.slice(0, 2).map(tag => (
+                    <Chip
+                      key={tag.id}
+                      compact
+                      style={[styles.tagChip, { borderColor: themeColor }]}
+                      textStyle={[styles.tagText, { color: themeColor }]}
+                    >
+                      {tag.name}
+                    </Chip>
+                  ))}
+                  {item.tags.length > 2 && (
+                    <Chip
+                      compact
+                      style={[styles.tagChip, { borderColor: themeColor }]}
+                      textStyle={[styles.tagText, { color: themeColor }]}
+                    >
+                      +{item.tags.length - 2}
+                    </Chip>
+                  )}
+                </View>
+              )}
             </View>
           </View>
           <Text 
             variant="titleMedium" 
             style={[
               styles.amount,
-              { color: item.type.toUpperCase() === 'INCOME' ? colors.income : colors.expense }
+              { color: themeColor }
             ]}
           >
             {formatCurrency(item.amount)}
@@ -113,6 +139,19 @@ const styles = StyleSheet.create({
   },
   amount: {
     fontWeight: '600',
+  },
+  tagsContainer: {
+    flexDirection: 'row',
+    marginTop: 6,
+    gap: 4,
+  },
+  tagChip: {
+    height: 20,
+    borderWidth: 1,
+    backgroundColor: 'transparent',
+  },
+  tagText: {
+    fontSize: 10,
   },
 });
   

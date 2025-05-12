@@ -8,20 +8,21 @@ import {
   ActivityIndicator,
   Alert
 } from 'react-native';
-import { Text, IconButton, TextInput, Button, Divider } from 'react-native-paper';
+import { Text, IconButton, TextInput, Button, Divider, Chip } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { colors } from '../../../theme';
 import { useFinances } from '../../../hooks/useFinances';
 import { currencyMask } from '../../../utils/masks';
 import CustomPicker from '../../../components/CustomPicker';
 import CustomDatePicker from '../../../components/CustomDatePicker';
+import TagSelector from '../../../components/TagSelector';
 import { Modalize } from 'react-native-modalize';
 import { Portal } from 'react-native-paper';
 import { ScrollView } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const TransactionDetailsModal = ({ visible, onDismiss, transaction, onUpdate, onDelete }) => {
-    const { accounts, categories } = useFinances();
+    const { accounts, categories, tags, addTag } = useFinances();
     const [isEditing, setIsEditing] = useState(false);
     const [editedTransaction, setEditedTransaction] = useState(null);
     const [showCategoryPicker, setShowCategoryPicker] = useState(false);
@@ -56,6 +57,7 @@ const TransactionDetailsModal = ({ visible, onDismiss, transaction, onUpdate, on
                 notes: transaction.notes || '',
                 categoryId: Number(transaction.categoryId),
                 accountId: Number(transaction.accountId),
+                tags: transaction.tags || [],
             });
         }
     }, [transaction]);
@@ -95,6 +97,7 @@ const TransactionDetailsModal = ({ visible, onDismiss, transaction, onUpdate, on
                 isRecurring: Boolean(editedTransaction.isRecurring),
                 categoryId: Number(editedTransaction.categoryId),
                 accountId: Number(editedTransaction.accountId),
+                tags: editedTransaction.tags.map(tag => tag.id),
             };
 
             await onUpdate({
@@ -156,6 +159,7 @@ const TransactionDetailsModal = ({ visible, onDismiss, transaction, onUpdate, on
             notes: transaction.notes || '',
             categoryId: Number(transaction.categoryId),
             accountId: Number(transaction.accountId),
+            tags: transaction.tags || [],
         });
         setIsEditing(true);
     };
@@ -170,7 +174,27 @@ const TransactionDetailsModal = ({ visible, onDismiss, transaction, onUpdate, on
             notes: transaction.notes || '',
             categoryId: Number(transaction.categoryId),
             accountId: Number(transaction.accountId),
+            tags: transaction.tags || [],
         });
+    };
+
+    // Função para atualizar as tags do editedTransaction
+    const handleTagsChange = (newTags) => {
+        setEditedTransaction(prev => ({
+            ...prev,
+            tags: newTags
+        }));
+    };
+
+    // Função para criar uma nova tag
+    const handleCreateTag = async (name) => {
+        try {
+            return await addTag(name);
+        } catch (error) {
+            console.error('Erro ao criar tag:', error);
+            Alert.alert('Erro', 'Não foi possível criar a tag');
+            return null;
+        }
     };
 
     const renderField = (label, value, icon, editableField) => {
@@ -220,8 +244,10 @@ const TransactionDetailsModal = ({ visible, onDismiss, transaction, onUpdate, on
                             showPicker={showDatePicker}
                             onPress={() => setShowDatePicker(true)}
                             onDateChange={(event, selectedDate) => {
-                                const dateEvent = event;
-                                dateEvent.persist && dateEvent.persist();
+                                // Garantindo que o evento é persistido
+                                if (event && event.persist) {
+                                    event.persist();
+                                }
                                 
                                 setShowDatePicker(false);
                                 if (selectedDate) {
@@ -238,6 +264,20 @@ const TransactionDetailsModal = ({ visible, onDismiss, transaction, onUpdate, on
                 );
             }
 
+            if (editableField === 'tags') {
+                return (
+                    <View style={styles.detailRow}>
+                        <TagSelector
+                            selectedTags={editedTransaction.tags}
+                            onTagsChange={handleTagsChange}
+                            availableTags={tags}
+                            onCreateTag={handleCreateTag}
+                            themeColor={themeColor}
+                        />
+                    </View>
+                );
+            }
+
             return (
                 <View style={styles.detailRow}>
                     <View style={styles.labelContainer}>
@@ -249,26 +289,51 @@ const TransactionDetailsModal = ({ visible, onDismiss, transaction, onUpdate, on
                             ? currencyMask(((editedTransaction[editableField] || 0) * 100).toString()) 
                             : editedTransaction[editableField] || ''}
                         onChangeText={(text) => {
-                            let newValue = text;
                             if (editableField === 'amount') {
-                                newValue = text.replace(/[^0-9]/g, '');
+                                const numericValue = parseFloat(text.replace(/\D/g, '')) / 100;
                                 setEditedTransaction(prev => ({
                                     ...prev,
-                                    [editableField]: newValue ? parseFloat(newValue) / 100 : 0
+                                    [editableField]: numericValue
                                 }));
                             } else {
                                 setEditedTransaction(prev => ({
                                     ...prev,
-                                    [editableField]: text || ''
+                                    [editableField]: text
                                 }));
                             }
                         }}
-                        mode="outlined"
+                        keyboardType={editableField === 'amount' ? 'numeric' : 'default'}
                         style={styles.input}
+                        mode="outlined"
                         outlineColor={themeColor}
                         activeOutlineColor={themeColor}
-                        keyboardType={editableField === 'amount' ? 'numeric' : 'default'}
                     />
+                </View>
+            );
+        }
+
+        if (editableField === 'tags') {
+            return (
+                <View style={styles.detailRow}>
+                    <View style={styles.labelContainer}>
+                        <Icon name={icon} size={20} color={themeColor} />
+                        <Text style={styles.label}>{label}</Text>
+                    </View>
+                    <View style={styles.tagsContainer}>
+                        {transaction.tags && transaction.tags.length > 0 ? (
+                            transaction.tags.map(tag => (
+                                <Chip
+                                    key={tag.id}
+                                    style={[styles.tagChip, { borderColor: themeColor }]}
+                                    textStyle={{ color: themeColor }}
+                                >
+                                    {tag.name}
+                                </Chip>
+                            ))
+                        ) : (
+                            <Text style={styles.noTagsText}>Sem tags</Text>
+                        )}
+                    </View>
                 </View>
             );
         }
@@ -276,7 +341,7 @@ const TransactionDetailsModal = ({ visible, onDismiss, transaction, onUpdate, on
         return (
             <View style={styles.detailRow}>
                 <View style={styles.labelContainer}>
-                    <Icon name={icon} size={22} color={themeColor} />
+                    <Icon name={icon} size={20} color={themeColor} />
                     <Text style={styles.label}>{label}</Text>
                 </View>
                 <Text style={styles.value}>{value}</Text>
@@ -284,13 +349,25 @@ const TransactionDetailsModal = ({ visible, onDismiss, transaction, onUpdate, on
         );
     };
 
-    const modalHeight = Dimensions.get('window').height * 0.85;
+    const renderDetails = () => {
+        return (
+            <View style={styles.detailsContainer}>
+                {renderField('Descrição', editedTransaction.description, 'text-subject', 'description')}
+                {renderField('Valor', formatCurrency(transaction.amount), 'currency-usd', 'amount')}
+                {renderField('Data', formatDate(transaction.date), 'calendar', 'date')}
+                {renderField('Categoria', category?.name, 'shape-outline', 'categoryId')}
+                {renderField('Conta', account?.name, 'bank-outline', 'accountId')}
+                {renderField('Tags', '', 'tag-outline', 'tags')}
+                {renderField('Observações', editedTransaction.notes, 'text-box-outline', 'notes')}
+            </View>
+        );
+    };
 
     return (
         <Portal>
             <Modalize
                 ref={modalizeRef}
-                modalHeight={modalHeight}
+                modalHeight={Dimensions.get('window').height * 0.85}
                 threshold={100}
                 velocity={840}
                 closeOnOverlayTap={true}
@@ -298,7 +375,7 @@ const TransactionDetailsModal = ({ visible, onDismiss, transaction, onUpdate, on
                 withHandle={true}
                 handlePosition="outside"
                 onClose={handleDismiss}
-                handleStyle={{ backgroundColor: themeColor, width: 50, height: 5 }}
+                handleStyle={{ backgroundColor: themeColor, width: 50, height: 5, marginTop: 30 }}
                 modalStyle={{
                     backgroundColor: colors.background,
                     borderTopLeftRadius: 24,
@@ -307,197 +384,120 @@ const TransactionDetailsModal = ({ visible, onDismiss, transaction, onUpdate, on
                 overlayStyle={{ backgroundColor: 'rgba(0, 0, 0, 0.65)' }}
                 adjustToContentHeight={false}
                 HeaderComponent={
-                    <View style={styles.header}>
-                        <View style={styles.headerActions}>
+                    <View style={styles.modalHeader}>
+                        <IconButton
+                            icon="arrow-left"
+                            size={24}
+                            onPress={isEditing ? handleCancel : handleDismiss}
+                            style={styles.backButton}
+                        />
+                        <Text variant="titleLarge" style={styles.modalTitle}>
+                            {isEditing ? 'Editar Transação' : 'Detalhes da Transação'}
+                        </Text>
+                        {!isEditing ? (
                             <IconButton
-                                icon={isEditing ? "content-save" : "pencil"}
+                                icon="pencil"
                                 size={24}
+                                onPress={handleStartEditing}
                                 iconColor={themeColor}
-                                onPress={isEditing ? handleSave : handleStartEditing}
-                                style={styles.actionIcon}
                             />
+                        ) : (
                             <IconButton
-                                icon="delete-outline"
+                                icon="content-save"
                                 size={24}
-                                iconColor={colors.error}
-                                onPress={handleDelete}
-                                style={styles.actionIcon}
+                                onPress={handleSave}
+                                iconColor={themeColor}
                             />
-                        </View>
-                        <Text variant="titleLarge" style={styles.title}>Detalhes da Transação</Text>
-                        <View style={styles.actionSpace} />
+                        )}
+                    </View>
+                }
+                FooterComponent={
+                    <View style={[styles.footer, { paddingBottom: insets.bottom > 0 ? insets.bottom : 20 }]}>
+                        <Button
+                            mode="contained"
+                            onPress={handleDelete}
+                            buttonColor={colors.error}
+                            style={styles.deleteButton}
+                        >
+                            Excluir Transação
+                        </Button>
                     </View>
                 }
             >
-                <KeyboardAvoidingView
-                    behavior={Platform.OS === "ios" ? "padding" : "height"}
-                    style={styles.content}
-                >
-                    <ScrollView 
-                        showsVerticalScrollIndicator={false}
-                        contentContainerStyle={[
-                            styles.scrollContent, 
-                            { paddingBottom: insets.bottom + 20 }
-                        ]}
-                    >
-                        <View style={styles.detailsContainer}>
-                            {renderField(
-                                'Valor',
-                                formatCurrency(transaction.amount),
-                                'cash',
-                                'amount'
-                            )}
-
-                            {renderField(
-                                'Descrição',
-                                transaction.description,
-                                'text-box-outline',
-                                'description'
-                            )}
-
-                            {renderField(
-                                'Data',
-                                formatDate(transaction.date),
-                                'calendar',
-                                'date'
-                            )}
-
-                            {category && renderField(
-                                'Categoria',
-                                category.name,
-                                'tag-outline',
-                                'categoryId'
-                            )}
-
-                            {account && renderField(
-                                'Conta',
-                                account.name,
-                                'bank-outline',
-                                'accountId'
-                            )}
-
-                            {transaction.notes && renderField(
-                                'Observações',
-                                transaction.notes,
-                                'note-text-outline',
-                                'notes'
-                            )}
-                        </View>
-
-                        <Divider style={styles.divider} />
-
-                        {isEditing && (
-                            <View style={styles.buttonContainer}>
-                                <Button
-                                    mode="contained"
-                                    onPress={handleSave}
-                                    style={[styles.button, { backgroundColor: themeColor }]}
-                                >
-                                    Salvar Alterações
-                                </Button>
-                                <Button
-                                    mode="outlined"
-                                    onPress={handleCancel}
-                                    style={styles.cancelButton}
-                                >
-                                    Cancelar
-                                </Button>
-                            </View>
-                        )}
-                    </ScrollView>
-                </KeyboardAvoidingView>
+                <ScrollView style={styles.content}>
+                    {renderDetails()}
+                </ScrollView>
             </Modalize>
         </Portal>
     );
 };
 
 const styles = StyleSheet.create({
-    content: {
-        flex: 1,
-    },
-    scrollContent: {
-        paddingHorizontal: 24,
-        paddingTop: 0,
-    },
-    header: {
+    modalHeader: {
         flexDirection: 'row',
+        alignItems: 'center',
         justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 12,
-        paddingHorizontal: 16,
-        paddingTop: 16,
+        paddingHorizontal: 8,
+        paddingVertical: 8,
     },
-    headerActions: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        width: 80,
+    backButton: {
+        marginRight: 16,
     },
-    actionSpace: {
-        width: 80,
-    },
-    actionIcon: {
-        marginLeft: -4,
-    },
-    title: {
-        textAlign: 'center',
-        color: colors.text,
+    modalTitle: {
         flex: 1,
-        fontWeight: 'bold',
         fontSize: 18,
+        fontWeight: 'bold',
     },
-    divider: {
-        height: 1,
-        backgroundColor: colors.outline,
-        marginVertical: 24,
+    content: {
+        paddingHorizontal: 20,
+        paddingBottom: 30,
     },
     detailsContainer: {
-        gap: 24,
-        marginTop: 16,
+        marginTop: 20,
     },
     detailRow: {
-        minHeight: 54,
-        justifyContent: 'center',
+        marginBottom: 24,
     },
     labelContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 10,
-        marginBottom: 6,
+        marginBottom: 8,
     },
     label: {
-        fontSize: 16,
+        marginLeft: 8,
+        fontSize: 14,
         color: colors.text,
         opacity: 0.7,
     },
     value: {
-        fontSize: 18,
-        color: colors.text,
-        paddingLeft: 32,
-        marginTop: 6,
+        fontSize: 16,
         fontWeight: '500',
-    },
-    buttonContainer: {
-        marginVertical: 20,
-        gap: 16,
+        color: colors.text,
     },
     input: {
-        backgroundColor: colors.background,
-        marginLeft: 32,
-        marginTop: 4,
-        height: 48,
-        fontSize: 18,
+        backgroundColor: 'transparent',
     },
-    button: {
-        borderRadius: 12,
-        paddingVertical: 8,
-        height: 54,
+    footer: {
+        paddingHorizontal: 20,
+        paddingTop: 20,
+        borderTopWidth: 1,
+        borderTopColor: colors.outline,
     },
-    cancelButton: {
-        borderColor: colors.text,
-        borderWidth: 1.5,
-        borderRadius: 12,
-        backgroundColor: colors.surface,
-        textColor: colors.text,
+    deleteButton: {
+        borderRadius: 8,
+    },
+    tagsContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 8,
+    },
+    tagChip: {
+        borderWidth: 1,
+        backgroundColor: 'transparent',
+    },
+    noTagsText: {
+        color: colors.placeholder,
+        fontStyle: 'italic',
     },
 });
 

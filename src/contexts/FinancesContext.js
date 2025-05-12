@@ -1,5 +1,6 @@
 import React, { createContext, useState, useCallback, useEffect } from 'react';
 import { financesService } from '../services/finances';
+import TagsService from '../services/tags';
 
 export const FinancesContext = createContext({});
 
@@ -7,6 +8,7 @@ export const FinancesProvider = ({ children }) => {
   const [accounts, setAccounts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [transactions, setTransactions] = useState([]);
+  const [tags, setTags] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     startDate: null,
@@ -14,6 +16,7 @@ export const FinancesProvider = ({ children }) => {
     categoryId: null,
     accountId: null,
     type: null,
+    tags: [],
   });
   const [pagination, setPagination] = useState({
     page: 1,
@@ -25,15 +28,17 @@ export const FinancesProvider = ({ children }) => {
   useEffect(() => {
     const loadInitialData = async () => {
       try {
-        // Carrega contas e categorias em paralelo pois são independentes
-        const [accountsData, categoriesData] = await Promise.all([
+        // Carrega contas, categorias e tags em paralelo pois são independentes
+        const [accountsData, categoriesData, tagsData] = await Promise.all([
           financesService.getAccounts(),
           financesService.getCategories(),
+          TagsService.getTags(),
         ]);
 
 
         setAccounts(accountsData);
         setCategories(categoriesData);
+        setTags(tagsData);
 
         // Carrega apenas a primeira página de transações
         await loadTransactions(true);
@@ -151,6 +156,67 @@ export const FinancesProvider = ({ children }) => {
     }
   }, []);
 
+  // Tags
+  const loadTags = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await TagsService.getTags();
+      setTags(data);
+    } catch (error) {
+      console.error('Erro ao carregar tags:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const addTag = useCallback(async (name) => {
+    try {
+      const newTag = await TagsService.createTag(name);
+      setTags(current => [...current, newTag]);
+      return newTag;
+    } catch (error) {
+      console.error('Erro ao criar tag:', error);
+      throw error;
+    }
+  }, []);
+
+  const updateTag = useCallback(async (id, name) => {
+    try {
+      const updatedTag = await TagsService.updateTag(id, name);
+      setTags(current => 
+        current.map(tag => 
+          tag.id === id ? updatedTag : tag
+        )
+      );
+      return updatedTag;
+    } catch (error) {
+      console.error('Erro ao atualizar tag:', error);
+      throw error;
+    }
+  }, []);
+
+  const deleteTag = useCallback(async (id) => {
+    try {
+      await TagsService.deleteTag(id);
+      setTags(current => 
+        current.filter(tag => tag.id !== id)
+      );
+    } catch (error) {
+      console.error('Erro ao deletar tag:', error);
+      throw error;
+    }
+  }, []);
+
+  const getTransactionsByTag = useCallback(async (tagId) => {
+    try {
+      return await TagsService.getTransactionsByTag(tagId);
+    } catch (error) {
+      console.error('Erro ao buscar transações por tag:', error);
+      throw error;
+    }
+  }, []);
+
   // Transactions com paginação e filtros
   const loadTransactions = useCallback(async (reset = false) => {
     try {
@@ -246,6 +312,7 @@ export const FinancesProvider = ({ children }) => {
         accounts,
         categories,
         transactions,
+        tags,
         loading,
         filters,
         pagination,
@@ -262,6 +329,11 @@ export const FinancesProvider = ({ children }) => {
         updateTransaction,
         deleteTransaction,
         updateFilters,
+        loadTags,
+        addTag,
+        updateTag,
+        deleteTag,
+        getTransactionsByTag,
       }}
     >
       {children}

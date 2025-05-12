@@ -53,12 +53,24 @@ export const financesService = {
 
   // Transações
   async createTransaction(transactionData) {
-    const response = await api.post('/api/transactions', transactionData);
+    // Formatação dos dados de tags para envio ao backend, se necessário
+    const formattedData = {
+      ...transactionData,
+      // Se há tags, envie-as no formato esperado pelo backend
+      tagIds: transactionData.tags || []
+    };
+    
+    // Remove o campo tags para não enviar dados duplicados
+    if (formattedData.tags) {
+      delete formattedData.tags;
+    }
+    
+    const response = await api.post('/api/transactions', formattedData);
     return response.data;
   },
 
-  async getTransactions() {
-    const response = await api.get('/api/transactions');
+  async getTransactions(params = {}) {
+    const response = await api.get('/api/transactions', { params });
     return response.data;
   },
 
@@ -68,7 +80,19 @@ export const financesService = {
   },
 
   async updateTransaction(id, transactionData) {
-    const response = await api.put(`/api/transactions/${id}`, transactionData);
+    // Formatação dos dados de tags para envio ao backend
+    const formattedData = {
+      ...transactionData,
+      // Se há tags, envie-as no formato esperado pelo backend
+      tagIds: transactionData.tags || []
+    };
+    
+    // Remove o campo tags para não enviar dados duplicados
+    if (formattedData.tags) {
+      delete formattedData.tags;
+    }
+    
+    const response = await api.put(`/api/transactions/${id}`, formattedData);
     return response.data;
   },
 

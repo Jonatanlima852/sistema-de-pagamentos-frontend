@@ -14,7 +14,8 @@ const Transactions = () => {
     loadTransactions, 
     pagination, 
     filters, 
-    updateFilters 
+    updateFilters,
+    tags
   } = useFinances();
 
   const [filterVisible, setFilterVisible] = useState(false);
@@ -52,6 +53,18 @@ const Transactions = () => {
       filtered = filtered.filter(transaction => 
         filters.categories.includes(transaction.categoryId)
       );
+    }
+
+    // Aplicar filtro de tags
+    if (filters.tags && filters.tags.length > 0) {
+      filtered = filtered.filter(transaction => {
+        if (!transaction.tags) return false;
+        
+        // Verifica se a transação tem pelo menos uma das tags selecionadas
+        return transaction.tags.some(tag => 
+          filters.tags.includes(tag.id)
+        );
+      });
     }
 
     // Aplicar filtro de data

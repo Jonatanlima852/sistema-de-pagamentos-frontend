@@ -11,7 +11,7 @@ import { ScrollView } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const TransactionFilters = ({ visible, onClose, filters, updateFilters }) => {
-  const { categories } = useFinances();
+  const { categories, tags } = useFinances();
   const [activeSubTab, setActiveSubTab] = useState('details');
   const [transactionType, setTransactionType] = useState(filters.transactionType || 'all');
   const [startDate, setStartDate] = useState(filters.startDate || new Date());
@@ -19,6 +19,7 @@ const TransactionFilters = ({ visible, onClose, filters, updateFilters }) => {
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
   const [showEndDatePicker, setShowEndDatePicker] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState(filters.categories || []);
+  const [selectedTags, setSelectedTags] = useState(filters.tags || []);
   const insets = useSafeAreaInsets();
   
   // Referência para o Modalize
@@ -39,43 +40,45 @@ const TransactionFilters = ({ visible, onClose, filters, updateFilters }) => {
   }, [onClose]);
 
   const handleApplyFilters = () => {
-    const e = { persist: () => {} };
-    e.persist();
-    
     updateFilters({
       ...filters,
       transactionType,
       startDate,
       endDate,
       categories: selectedCategories,
+      tags: selectedTags,
     });
     handleDismiss();
   };
 
   const handleClearFilters = () => {
-    const e = { persist: () => {} };
-    e.persist();
-    
     setTransactionType('all');
     setStartDate(new Date());
     setEndDate(new Date());
     setSelectedCategories([]);
+    setSelectedTags([]);
     updateFilters({
       transactionType: 'all',
       startDate: null,
       endDate: null,
       categories: [],
+      tags: [],
     });
   };
 
   const toggleCategory = (categoryId) => {
-    const e = { persist: () => {} };
-    e.persist();
-    
     setSelectedCategories(prev => 
       prev.includes(categoryId)
         ? prev.filter(id => id !== categoryId)
         : [...prev, categoryId]
+    );
+  };
+
+  const toggleTag = (tagId) => {
+    setSelectedTags(prev => 
+      prev.includes(tagId)
+        ? prev.filter(id => id !== tagId)
+        : [...prev, tagId]
     );
   };
 
@@ -106,6 +109,46 @@ const TransactionFilters = ({ visible, onClose, filters, updateFilters }) => {
               }}
             >
               {category.name}
+            </Chip>
+          ))}
+        </View>
+      </View>
+    );
+  };
+
+  const renderTags = () => {
+    if (!tags || tags.length === 0) {
+      return (
+        <Text variant="bodyMedium" style={styles.noTagsText}>
+          Nenhuma tag disponível
+        </Text>
+      );
+    }
+    
+    return (
+      <View style={styles.tagsContainer}>
+        <Text variant="titleMedium" style={styles.tagsTitle}>
+          Tags
+        </Text>
+        <View style={styles.chipContainer}>
+          {tags.map(tag => (
+            <Chip
+              key={tag.id}
+              selected={selectedTags.includes(tag.id)}
+              onPress={() => toggleTag(tag.id)}
+              style={[
+                styles.tagChip,
+                selectedTags.includes(tag.id) && {
+                  backgroundColor: `${colors.primary}20`
+                }
+              ]}
+              textStyle={{
+                color: selectedTags.includes(tag.id)
+                  ? colors.primary
+                  : colors.text
+              }}
+            >
+              {tag.name}
             </Chip>
           ))}
         </View>
@@ -164,8 +207,6 @@ const TransactionFilters = ({ visible, onClose, filters, updateFilters }) => {
           <SegmentedButtons
             value={activeSubTab}
             onValueChange={(value) => {
-              const e = { persist: () => {} };
-              e.persist();
               setActiveSubTab(value);
             }}
             buttons={[
@@ -179,6 +220,11 @@ const TransactionFilters = ({ visible, onClose, filters, updateFilters }) => {
                 label: 'Categorias',
                 icon: 'shape-outline'
               },
+              { 
+                value: 'tags', 
+                label: 'Tags',
+                icon: 'tag-outline'
+              },
             ]}
             style={styles.segmentedButtons}
           />
@@ -191,8 +237,6 @@ const TransactionFilters = ({ visible, onClose, filters, updateFilters }) => {
               <TransactionTypeButtons
                 selectedType={transactionType}
                 onTypeChange={(type) => {
-                  const e = { persist: () => {} };
-                  e.persist();
                   setTransactionType(type);
                 }}
               />
@@ -206,13 +250,12 @@ const TransactionFilters = ({ visible, onClose, filters, updateFilters }) => {
                 date={startDate}
                 showPicker={showStartDatePicker}
                 onPress={() => {
-                  const e = { persist: () => {} };
-                  e.persist();
                   setShowStartDatePicker(true);
                 }}
                 onDateChange={(event, selectedDate) => {
-                  const dateEvent = event;
-                  dateEvent.persist && dateEvent.persist();
+                  if (event && event.persist) {
+                    event.persist();
+                  }
                   
                   setShowStartDatePicker(false);
                   if (selectedDate) {
@@ -228,13 +271,12 @@ const TransactionFilters = ({ visible, onClose, filters, updateFilters }) => {
                 date={endDate}
                 showPicker={showEndDatePicker}
                 onPress={() => {
-                  const e = { persist: () => {} };
-                  e.persist();
                   setShowEndDatePicker(true);
                 }}
                 onDateChange={(event, selectedDate) => {
-                  const dateEvent = event;
-                  dateEvent.persist && dateEvent.persist();
+                  if (event && event.persist) {
+                    event.persist();
+                  }
                   
                   setShowEndDatePicker(false);
                   if (selectedDate) {
@@ -254,6 +296,12 @@ const TransactionFilters = ({ visible, onClose, filters, updateFilters }) => {
             </View>
           )}
 
+          {activeSubTab === 'tags' && (
+            <View style={styles.filterSection}>
+              {renderTags()}
+            </View>
+          )}
+
           {activeSubTab === 'categories' && selectedCategories.length > 0 && (
             <View style={styles.selectedCategoriesInfo}>
               <Text variant="bodyMedium" style={styles.selectedCount}>
@@ -263,6 +311,20 @@ const TransactionFilters = ({ visible, onClose, filters, updateFilters }) => {
                 {categories
                   .filter(cat => selectedCategories.includes(cat.id))
                   .map(cat => cat.name)
+                  .join(', ')}
+              </Text>
+            </View>
+          )}
+
+          {activeSubTab === 'tags' && selectedTags.length > 0 && (
+            <View style={styles.selectedTagsInfo}>
+              <Text variant="bodyMedium" style={styles.selectedCount}>
+                Tags selecionadas: {selectedTags.length}
+              </Text>
+              <Text variant="bodySmall" style={styles.selectedTagsNames}>
+                {tags
+                  .filter(tag => selectedTags.includes(tag.id))
+                  .map(tag => tag.name)
                   .join(', ')}
               </Text>
             </View>
@@ -329,12 +391,28 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 18,
   },
+  tagsContainer: {
+    marginBottom: 28,
+  },
+  tagsTitle: {
+    marginBottom: 12,
+    fontWeight: '600',
+    fontSize: 18,
+  },
   chipContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 10,
   },
   categoryChip: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    marginBottom: 6,
+  },
+  tagChip: {
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 8,
@@ -349,6 +427,13 @@ const styles = StyleSheet.create({
     marginTop: 12,
     marginBottom: 20,
   },
+  selectedTagsInfo: {
+    padding: 16,
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    marginTop: 12,
+    marginBottom: 20,
+  },
   selectedCount: {
     fontWeight: '600',
   },
@@ -356,6 +441,17 @@ const styles = StyleSheet.create({
     marginTop: 6,
     color: colors.placeholder,
     lineHeight: 20,
+  },
+  selectedTagsNames: {
+    marginTop: 6,
+    color: colors.placeholder,
+    lineHeight: 20,
+  },
+  noTagsText: {
+    color: colors.placeholder,
+    marginTop: 8,
+    marginBottom: 16,
+    fontStyle: 'italic',
   },
 });
 
