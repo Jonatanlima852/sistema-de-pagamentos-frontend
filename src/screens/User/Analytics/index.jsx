@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
-import { Text, Card, Button } from 'react-native-paper';
+import { Text, Card } from 'react-native-paper';
 import { colors } from '../../../theme';
 import SafeScreen from '../../../components/SafeScreen';
 import { LineChart, BarChart, PieChart } from 'react-native-chart-kit';
@@ -14,6 +14,7 @@ const Analytics = () => {
   const [monthlyData, setMonthlyData] = useState(null);
   const [expenseAccountData, setExpenseAccountData] = useState(null);
   const [incomeAccountData, setIncomeAccountData] = useState(null);
+  const [forecast, setForecast] = useState(null);
 
   useEffect(() => {
     processData();
@@ -22,18 +23,62 @@ const Analytics = () => {
   const processData = () => {
     if (!transactions.length || !categories.length || !accounts.length) return;
 
-    // Processa dados de despesas
     const expenses = transactions.filter(txn => txn.type === 'EXPENSE');
-    
+    const incomes = transactions.filter(txn => txn.type === 'INCOME');
 
-    // Configura dados para gráfico de despesas por categoria
+    // Forecast logic
+    const now = new Date();
+    const monthsBack = 5;
+
+    const getMonthlyAverages = (txns) => {
+      const grouped = {};
+
+      txns.forEach(txn => {
+        const date = new Date(txn.date);
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        if (!grouped[txn.description]) grouped[txn.description] = {};
+        if (!grouped[txn.description][monthKey]) grouped[txn.description][monthKey] = 0;
+        grouped[txn.description][monthKey] += parseFloat(txn.amount);
+      });
+
+      const result = [];
+      Object.entries(grouped).forEach(([desc, values]) => {
+        const months = Object.keys(values)
+          .filter(mKey => {
+            const [y, m] = mKey.split('-').map(Number);
+            const date = new Date(y, m - 1);
+            return (now - date) / (1000 * 60 * 60 * 24 * 30) <= monthsBack;
+          });
+
+        if (months.length >= 3) {
+          const avg = months.reduce((sum, key) => sum + values[key], 0) / months.length;
+          result.push({ description: desc, average: avg });
+        }
+      });
+
+      return result.sort((a, b) => b.average - a.average).slice(0, 3);
+    };
+
+    const topExpenses = getMonthlyAverages(expenses);
+    const topIncomes = getMonthlyAverages(incomes);
+
+    const expenseForecast = topExpenses.reduce((sum, e) => sum + e.average, 0);
+    const incomeForecast = topIncomes.reduce((sum, i) => sum + i.average, 0);
+
+    setForecast({
+      expenseForecast,
+      incomeForecast,
+      balance: incomeForecast - expenseForecast,
+      topExpenses,
+      topIncomes
+    });
+
+    // Existing graph data setup (unchanged)
     const expenseCategories = categories
       .map(cat => ({
         id: cat.id,
         name: cat.name,
-        total: expenses
-          .filter(exp => exp.categoryId === cat.id)
-          .reduce((sum, exp) => sum + parseFloat(exp.amount), 0)
+        total: expenses.filter(exp => exp.categoryId === cat.id).reduce((sum, exp) => sum + parseFloat(exp.amount), 0)
       }))
       .filter(cat => cat.total > 0)
       .sort((a, b) => b.total - a.total)
@@ -41,22 +86,14 @@ const Analytics = () => {
 
     setExpenseData({
       labels: expenseCategories.map(cat => cat.name),
-      datasets: [{
-        data: expenseCategories.map(cat => cat.total)
-      }]
+      datasets: [{ data: expenseCategories.map(cat => cat.total) }]
     });
 
-    // Processa dados de receitas
-    const incomes = transactions.filter(txn => txn.type === 'INCOME');
-    
-    // Configura dados para gráfico de receitas por categoria
     const incomeCategories = categories
       .map(cat => ({
         id: cat.id,
         name: cat.name,
-        total: incomes
-          .filter(inc => inc.categoryId === cat.id)
-          .reduce((sum, inc) => sum + parseFloat(inc.amount), 0)
+        total: incomes.filter(inc => inc.categoryId === cat.id).reduce((sum, inc) => sum + parseFloat(inc.amount), 0)
       }))
       .filter(cat => cat.total > 0)
       .sort((a, b) => b.total - a.total)
@@ -64,31 +101,22 @@ const Analytics = () => {
 
     setIncomeData({
       labels: incomeCategories.map(cat => cat.name),
-      datasets: [{
-        data: incomeCategories.map(cat => cat.total)
-      }]
+      datasets: [{ data: incomeCategories.map(cat => cat.total) }]
     });
 
-    // Agrupa transações por mês
     const monthlyTransactions = transactions.reduce((acc, txn) => {
       const date = new Date(txn.date);
       const monthKey = date.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
-      if (!acc[monthKey]) {
-        acc[monthKey] = { expenses: 0, incomes: 0, timestamp: date.getTime() };
-      }
-      if (txn.type === 'EXPENSE') {
-        acc[monthKey].expenses += parseFloat(txn.amount);
-      } else {
-        acc[monthKey].incomes += parseFloat(txn.amount);
-      }
+      if (!acc[monthKey]) acc[monthKey] = { expenses: 0, incomes: 0, timestamp: date.getTime() };
+      if (txn.type === 'EXPENSE') acc[monthKey].expenses += parseFloat(txn.amount);
+      else acc[monthKey].incomes += parseFloat(txn.amount);
       return acc;
     }, {});
 
-    // Ordena os meses cronologicamente
     const months = Object.entries(monthlyTransactions)
       .sort((a, b) => a[1].timestamp - b[1].timestamp)
       .map(([month]) => month);
-    
+
     setMonthlyData({
       labels: months,
       datasets: [
@@ -105,56 +133,6 @@ const Analytics = () => {
       ],
       legend: ['Despesas', 'Receitas']
     });
-
-    // Processa dados de despesas por conta
-    const expenseAccounts = accounts
-      .map(acc => ({
-        id: acc.id,
-        name: acc.name,
-        total: expenses
-          .filter(exp => exp.accountId === acc.id)
-          .reduce((sum, exp) => sum + parseFloat(exp.amount), 0)
-      }))
-      .filter(acc => acc.total > 0)
-      .sort((a, b) => b.total - a.total)
-      .slice(0, 5);
-
-    setExpenseAccountData({
-      labels: expenseAccounts.map(acc => acc.name),
-      data: expenseAccounts.map(acc => acc.total),
-      colors: [
-        '#FF1010',
-        '#FF7034',
-        '#FF9F40',
-        '#FFCD56',
-        '#FFE56C'
-      ]
-    });
-
-    // Processa dados de receitas por conta
-    const incomeAccounts = accounts
-      .map(acc => ({
-        id: acc.id,
-        name: acc.name,
-        total: incomes
-          .filter(inc => inc.accountId === acc.id)
-          .reduce((sum, inc) => sum + parseFloat(inc.amount), 0)
-      }))
-      .filter(acc => acc.total > 0)
-      .sort((a, b) => b.total - a.total)
-      .slice(0, 5);
-
-    setIncomeAccountData({
-      labels: incomeAccounts.map(acc => acc.name),
-      data: incomeAccounts.map(acc => acc.total),
-      colors: [
-        '#00CC66',
-        '#4BC0C0',
-        '#36A2EB',
-        '#9966FF',
-        '#C9B3FF'
-      ]
-    });
   };
 
   return (
@@ -163,26 +141,30 @@ const Analytics = () => {
         <View style={styles.content}>
           <Text variant="headlineSmall" style={styles.title}>Análise Financeira</Text>
 
-          {/* Gráfico de Previsão de gasto */}
-          <Card style={styles.card}>
-            <Card.Content>
-              <Text variant="titleMedium" style={{ marginBottom: 8 }}>📊 Previsão de Gastos e Lucros</Text>
-              <Text style={styles.paragraph}>
-                Com base na média dos seus gastos dos últimos 3 meses, você deve gastar <Text style={{ color: '#C62828', fontWeight: 'bold' }}>R$ 2.400</Text> no próximo mês.
-              </Text>
-              <Text style={styles.paragraph}>
-                Com base na média dos seus ganhos, você deve lucrar <Text style={{ color: '#2E7D32', fontWeight: 'bold' }}>R$ 1.000</Text> no próximo mês.
-              </Text>
-              <Text style={styles.paragraph}>
-                <Text style={{ fontWeight: 'bold' }}>Saldo previsto: </Text>
-                <Text style={{ color: '#C62828', fontWeight: 'bold' }}>R$ -1.400</Text>
-              </Text>
-              <Text style={styles.paragraph}>
-                Sugestão: tente reduzir seus gastos com <Text style={{ fontWeight: 'bold' }}>Joguei no bixo</Text> e <Text style={{ fontWeight: 'bold' }}>Compras de início de mês</Text>.
-              </Text>
-            </Card.Content>
-          </Card>
-
+          {forecast && (
+            <Card style={styles.card}>
+              <Card.Content>
+                <Text variant="titleMedium" style={{ marginBottom: 8 }}>📊 Previsão de Gastos e Lucros</Text>
+                <Text style={styles.paragraph}>
+                  Com base na média dos seus gastos dos últimos 3 meses, você deve gastar <Text style={{ color: '#C62828', fontWeight: 'bold' }}>{`R$ ${forecast.expenseForecast.toFixed(2)}`}</Text> no próximo mês.
+                </Text>
+                <Text style={styles.paragraph}>
+                  Com base na média dos seus ganhos, você deve lucrar <Text style={{ color: '#2E7D32', fontWeight: 'bold' }}>{`R$ ${forecast.incomeForecast.toFixed(2)}`}</Text> no próximo mês.
+                </Text>
+                <Text style={styles.paragraph}>
+                  <Text style={{ fontWeight: 'bold' }}>Saldo previsto: </Text>
+                  <Text style={{ color: forecast.balance < 0 ? '#C62828' : '#2E7D32', fontWeight: 'bold' }}>{`R$ ${forecast.balance.toFixed(2)}`}</Text>
+                </Text>
+                {forecast.topExpenses.length > 0 && (
+                  <Text style={styles.paragraph}>
+                    Sugestão: tente reduzir seus gastos com {forecast.topExpenses.map((e, i) => (
+                      <Text key={i} style={{ fontWeight: 'bold' }}>{e.description}{i < forecast.topExpenses.length - 1 ? ' e ' : '.'}</Text>
+                    ))}
+                  </Text>
+                )}
+              </Card.Content>
+            </Card>
+          )}
 
           {/* Gráfico de Despesas por Categoria */}
           <Card style={styles.card}>
@@ -408,12 +390,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     borderRadius: 12,
   },
-  bullet: {
-    marginLeft: 8,
-    marginBottom: 4,
+  paragraph: {
     color: colors.text,
+    marginBottom: 8,
     fontSize: 14
-  },  
+  }
 });
 
-export default Analytics; 
+export default Analytics;
