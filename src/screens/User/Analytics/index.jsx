@@ -8,17 +8,19 @@ import { Dimensions } from 'react-native';
 import { useFinances } from '../../../hooks/useFinances';
 
 const Analytics = () => {
-  const { transactions, categories, accounts } = useFinances();
+  const { transactions, categories, accounts, tags } = useFinances();
   const [expenseData, setExpenseData] = useState(null);
   const [incomeData, setIncomeData] = useState(null);
   const [monthlyData, setMonthlyData] = useState(null);
   const [expenseAccountData, setExpenseAccountData] = useState(null);
   const [incomeAccountData, setIncomeAccountData] = useState(null);
+  const [expensiveTagsData, setExpensiveTagsData] = useState(null);
+  const [cheapTagsData, setCheapTagsData] = useState(null);
   const [forecast, setForecast] = useState(null);
 
   useEffect(() => {
     processData();
-  }, [transactions, categories, accounts]);
+  }, [transactions, categories, accounts, tags]);
 
   const processData = () => {
     if (!transactions.length || !categories.length || !accounts.length) return;
@@ -26,51 +28,132 @@ const Analytics = () => {
     const expenses = transactions.filter(txn => txn.type === 'EXPENSE');
     const incomes = transactions.filter(txn => txn.type === 'INCOME');
 
-    // Forecast logic
+    // Processa dados de tags
+    processTags(transactions);
+
+    // Lógica de previsão melhorada
     const now = new Date();
-    const monthsBack = 5;
+    const monthsBack = 6; // Aumentado para considerar mais dados históricos
 
-    const getMonthlyAverages = (txns) => {
+    const getMonthlyTrends = (txns) => {
       const grouped = {};
+      const monthlyTotals = {};
 
+      // Agrupar por mês e categoria
       txns.forEach(txn => {
         const date = new Date(txn.date);
         const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        
+        // Agrupar por descrição
         if (!grouped[txn.description]) grouped[txn.description] = {};
         if (!grouped[txn.description][monthKey]) grouped[txn.description][monthKey] = 0;
         grouped[txn.description][monthKey] += parseFloat(txn.amount);
+        
+        // Agrupar por categoria
+        const category = categories.find(c => c.id === txn.categoryId)?.name || 'Sem categoria';
+        if (!grouped[category]) grouped[category] = {};
+        if (!grouped[category][monthKey]) grouped[category][monthKey] = 0;
+        grouped[category][monthKey] += parseFloat(txn.amount);
+        
+        // Total mensal
+        if (!monthlyTotals[monthKey]) monthlyTotals[monthKey] = 0;
+        monthlyTotals[monthKey] += parseFloat(txn.amount);
       });
 
-      const result = [];
-      Object.entries(grouped).forEach(([desc, values]) => {
-        const months = Object.keys(values)
-          .filter(mKey => {
-            const [y, m] = mKey.split('-').map(Number);
-            const date = new Date(y, m - 1);
-            return (now - date) / (1000 * 60 * 60 * 24 * 30) <= monthsBack;
-          });
+      // Calcular média, tendência e projeção para próximos 3 meses
+      const filteredMonths = Object.keys(monthlyTotals)
+        .sort()
+        .filter(mKey => {
+          const [y, m] = mKey.split('-').map(Number);
+          const date = new Date(y, m - 1);
+          return (now - date) / (1000 * 60 * 60 * 24 * 30) <= monthsBack;
+        });
 
-        if (months.length >= 3) {
-          const avg = months.reduce((sum, key) => sum + values[key], 0) / months.length;
-          result.push({ description: desc, average: avg });
-        }
-      });
+      // Verificar se há pelo menos 3 meses de dados
+      if (filteredMonths.length < 3) {
+        return { items: [], trend: 0, projection: 0 };
+      }
 
-      return result.sort((a, b) => b.average - a.average).slice(0, 3);
+      // Calcular tendência de crescimento/decrescimento
+      const firstMonth = filteredMonths[0];
+      const lastMonth = filteredMonths[filteredMonths.length - 1];
+      const monthsCount = filteredMonths.length;
+      
+      const firstValue = monthlyTotals[firstMonth] || 0;
+      const lastValue = monthlyTotals[lastMonth] || 0;
+      
+      // Calcular coeficiente de tendência mensal
+      let trend = 0;
+      if (monthsCount > 1 && firstValue > 0) {
+        trend = (lastValue - firstValue) / (monthsCount - 1);
+      }
+
+      // Média dos últimos 3 meses (mais recente)
+      const recentMonths = filteredMonths.slice(-3);
+      const average = recentMonths.reduce((sum, m) => sum + (monthlyTotals[m] || 0), 0) / recentMonths.length;
+      
+      // Projeção considerando a média e tendência
+      const projection = average + trend;
+      
+      // Intervalo de confiança (±15%)
+      const margin = projection * 0.15;
+      const minProjection = Math.max(0, projection - margin);
+      const maxProjection = projection + margin;
+
+      // Principais itens com média e tendência
+      const items = Object.entries(grouped)
+        .map(([description, values]) => {
+          const monthKeys = Object.keys(values).filter(k => filteredMonths.includes(k));
+          if (monthKeys.length < 3) return null;
+          
+          const avg = monthKeys.reduce((sum, key) => sum + values[key], 0) / monthKeys.length;
+          
+          // Calcular tendência do item específico
+          const firstItemValue = values[firstMonth] || 0;
+          const lastItemValue = values[lastMonth] || 0;
+          let itemTrend = 0;
+          if (monthsCount > 1 && firstItemValue > 0) {
+            itemTrend = (lastItemValue - firstItemValue) / (monthsCount - 1);
+          }
+          
+          return {
+            description,
+            average: avg,
+            trend: itemTrend,
+            isIncreasing: itemTrend > 0
+          };
+        })
+        .filter(Boolean)
+        .sort((a, b) => b.average - a.average)
+        .slice(0, 5);
+
+      return {
+        items,
+        trend,
+        projection,
+        minProjection,
+        maxProjection,
+        isIncreasing: trend > 0
+      };
     };
 
-    const topExpenses = getMonthlyAverages(expenses);
-    const topIncomes = getMonthlyAverages(incomes);
-
-    const expenseForecast = topExpenses.reduce((sum, e) => sum + e.average, 0);
-    const incomeForecast = topIncomes.reduce((sum, i) => sum + i.average, 0);
+    const expenseTrends = getMonthlyTrends(expenses);
+    const incomeTrends = getMonthlyTrends(incomes);
 
     setForecast({
-      expenseForecast,
-      incomeForecast,
-      balance: incomeForecast - expenseForecast,
-      topExpenses,
-      topIncomes
+      expenseForecast: expenseTrends.projection,
+      incomeForecast: incomeTrends.projection,
+      balance: incomeTrends.projection - expenseTrends.projection,
+      minExpense: expenseTrends.minProjection,
+      maxExpense: expenseTrends.maxProjection,
+      minIncome: incomeTrends.minProjection,
+      maxIncome: incomeTrends.maxProjection,
+      expenseTrend: expenseTrends.trend,
+      incomeTrend: incomeTrends.trend,
+      topExpenses: expenseTrends.items,
+      topIncomes: incomeTrends.items,
+      isExpenseIncreasing: expenseTrends.isIncreasing,
+      isIncomeIncreasing: incomeTrends.isIncreasing
     });
 
     // Existing graph data setup (unchanged)
@@ -135,6 +218,55 @@ const Analytics = () => {
     });
   };
 
+  // Função para processar dados de tags
+  const processTags = (transactions) => {
+    if (!transactions || !transactions.length || !tags || !tags.length) return;
+
+    // Mapeamento das tags para seus totais
+    const tagsTotals = {};
+    
+    // Para cada transação, acumula o valor para cada tag associada
+    transactions.forEach(transaction => {
+      if (transaction.tags && transaction.tags.length > 0) {
+        transaction.tags.forEach(tag => {
+          if (!tagsTotals[tag.id]) {
+            tagsTotals[tag.id] = {
+              id: tag.id,
+              name: tag.name,
+              total: 0
+            };
+          }
+          tagsTotals[tag.id].total += parseFloat(transaction.amount || 0);
+        });
+      }
+    });
+
+    // Converte em array para ordenação
+    const tagsArray = Object.values(tagsTotals);
+
+    // Tags mais caras (maiores valores)
+    const mostExpensiveTags = [...tagsArray]
+      .filter(tag => tag.total > 0)
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 5);
+
+    // Tags mais baratas (menores valores)
+    const cheapestTags = [...tagsArray]
+      .filter(tag => tag.total > 0)
+      .sort((a, b) => a.total - b.total)
+      .slice(0, 5);
+
+    setExpensiveTagsData({
+      labels: mostExpensiveTags.map(tag => tag.name),
+      datasets: [{ data: mostExpensiveTags.map(tag => tag.total) }]
+    });
+
+    setCheapTagsData({
+      labels: cheapestTags.map(tag => tag.name),
+      datasets: [{ data: cheapestTags.map(tag => tag.total) }]
+    });
+  };
+
   return (
     <SafeScreen>
       <ScrollView style={styles.container}>
@@ -145,26 +277,133 @@ const Analytics = () => {
             <Card style={styles.card}>
               <Card.Content>
                 <Text variant="titleMedium" style={{ marginBottom: 8 }}>📊 Previsão de Gastos e Lucros</Text>
+                
                 <Text style={styles.paragraph}>
-                  Com base na média dos seus gastos dos últimos 3 meses, você deve gastar <Text style={{ color: '#C62828', fontWeight: 'bold' }}>{`R$ ${forecast.expenseForecast.toFixed(2)}`}</Text> no próximo mês.
+                  No próximo mês, você deve gastar entre <Text style={{ color: '#C62828', fontWeight: 'bold' }}>{`R$ ${forecast.minExpense?.toFixed(2) || 0}`}</Text> e <Text style={{ color: '#C62828', fontWeight: 'bold' }}>{`R$ ${forecast.maxExpense?.toFixed(2) || 0}`}</Text>
+                  {forecast.expenseTrend > 0 ? 
+                    <Text style={{ color: '#C62828' }}> (tendência de aumento ↑)</Text> : 
+                    forecast.expenseTrend < 0 ? 
+                    <Text style={{ color: '#2E7D32' }}> (tendência de redução ↓)</Text> : 
+                    ''
+                  }
                 </Text>
+                
                 <Text style={styles.paragraph}>
-                  Com base na média dos seus ganhos, você deve lucrar <Text style={{ color: '#2E7D32', fontWeight: 'bold' }}>{`R$ ${forecast.incomeForecast.toFixed(2)}`}</Text> no próximo mês.
+                  Previsão de receitas entre <Text style={{ color: '#2E7D32', fontWeight: 'bold' }}>{`R$ ${forecast.minIncome?.toFixed(2) || 0}`}</Text> e <Text style={{ color: '#2E7D32', fontWeight: 'bold' }}>{`R$ ${forecast.maxIncome?.toFixed(2) || 0}`}</Text>
+                  {forecast.incomeTrend > 0 ? 
+                    <Text style={{ color: '#2E7D32' }}> (tendência de aumento ↑)</Text> : 
+                    forecast.incomeTrend < 0 ? 
+                    <Text style={{ color: '#C62828' }}> (tendência de redução ↓)</Text> : 
+                    ''
+                  }
                 </Text>
+                
                 <Text style={styles.paragraph}>
                   <Text style={{ fontWeight: 'bold' }}>Saldo previsto: </Text>
                   <Text style={{ color: forecast.balance < 0 ? '#C62828' : '#2E7D32', fontWeight: 'bold' }}>{`R$ ${forecast.balance.toFixed(2)}`}</Text>
                 </Text>
-                {forecast.topExpenses.length > 0 && (
-                  <Text style={styles.paragraph}>
-                    Sugestão: tente reduzir seus gastos com {forecast.topExpenses.map((e, i) => (
-                      <Text key={i} style={{ fontWeight: 'bold' }}>{e.description}{i < forecast.topExpenses.length - 1 ? ' e ' : '.'}</Text>
+                
+                {forecast.topExpenses && forecast.topExpenses.length > 0 && (
+                  <View style={styles.recommendationBox}>
+                    <Text style={[styles.paragraph, {fontWeight: 'bold'}]}>Análise de despesas:</Text>
+                    {forecast.topExpenses.slice(0, 3).map((e, i) => (
+                      <Text key={i} style={styles.paragraph}>
+                        • {e.description}: <Text style={{fontWeight: 'bold'}}>{`R$ ${e.average.toFixed(2)}`}</Text>
+                        {e.trend > 5 ? 
+                          <Text style={{ color: '#C62828' }}> (aumentando ↑)</Text> : 
+                          e.trend < -5 ? 
+                          <Text style={{ color: '#2E7D32' }}> (diminuindo ↓)</Text> : 
+                          <Text> (estável)</Text>
+                        }
+                      </Text>
                     ))}
-                  </Text>
+                    <Text style={[styles.paragraph, {marginTop: 4}]}>
+                      {forecast.isExpenseIncreasing ? 
+                        'Atenção: suas despesas estão aumentando. Considere revisar os gastos acima.' : 
+                        'Boa notícia: suas despesas estão estáveis ou diminuindo.'
+                      }
+                    </Text>
+                  </View>
                 )}
               </Card.Content>
             </Card>
           )}
+
+          {/* Gráfico de Tags Mais Caras */}
+          <Card style={styles.card}>
+            <Card.Content>
+              <Text variant="titleMedium">Top 5 Tags Mais Caras</Text>
+              {!expensiveTagsData ? (
+                <Text>Carregando dados...</Text>
+              ) : expensiveTagsData.datasets[0].data.length === 0 ? (
+                <Text>Nenhuma tag registrada</Text>
+              ) : (
+                <BarChart
+                  data={expensiveTagsData}
+                  width={Dimensions.get('window').width - 64}
+                  height={240}
+                  yAxisLabel="R$ "
+                  yAxisInterval={1} 
+                  fromZero={true}
+                  withHorizontalLabels={false}
+                  chartConfig={{
+                    backgroundColor: colors.background,
+                    backgroundGradientFrom: colors.background,
+                    backgroundGradientTo: colors.background,
+                    decimalPlaces: 0,
+                    color: (opacity = 1) => `rgba(48, 63, 159, ${opacity})`,
+                    labelColor: (opacity = 1) => colors.text,
+                    barPercentage: 0.8,
+                  }}
+                  style={{
+                    marginVertical: 14,
+                    borderRadius: 16
+                  }}
+                  showValuesOnTopOfBars={true}
+                  withInnerLines={true}
+                  segments={4} 
+                />
+              )}
+            </Card.Content>
+          </Card>
+
+          {/* Gráfico de Tags Mais Baratas */}
+          <Card style={styles.card}>
+            <Card.Content>
+              <Text variant="titleMedium">Top 5 Tags Mais Baratas</Text>
+              {!cheapTagsData ? (
+                <Text>Carregando dados...</Text>
+              ) : cheapTagsData.datasets[0].data.length === 0 ? (
+                <Text>Nenhuma tag registrada</Text>
+              ) : (
+                <BarChart
+                  data={cheapTagsData}
+                  width={Dimensions.get('window').width - 64}
+                  height={240}
+                  yAxisLabel="R$ "
+                  yAxisInterval={1} 
+                  fromZero={true}
+                  withHorizontalLabels={false}
+                  chartConfig={{
+                    backgroundColor: colors.background,
+                    backgroundGradientFrom: colors.background,
+                    backgroundGradientTo: colors.background,
+                    decimalPlaces: 0,
+                    color: (opacity = 1) => `rgba(121, 85, 72, ${opacity})`,
+                    labelColor: (opacity = 1) => colors.text,
+                    barPercentage: 0.8,
+                  }}
+                  style={{
+                    marginVertical: 14,
+                    borderRadius: 16
+                  }}
+                  showValuesOnTopOfBars={true}
+                  withInnerLines={true}
+                  segments={4} 
+                />
+              )}
+            </Card.Content>
+          </Card>
 
           {/* Gráfico de Despesas por Categoria */}
           <Card style={styles.card}>
@@ -394,7 +633,15 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginBottom: 8,
     fontSize: 14
-  }
+  },
+  recommendationBox: {
+    marginTop: 8,
+    backgroundColor: colors.surface,
+    padding: 10,
+    borderRadius: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.primary,
+  },
 });
 
 export default Analytics;
