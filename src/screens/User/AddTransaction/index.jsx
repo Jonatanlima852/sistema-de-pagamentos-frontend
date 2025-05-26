@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { View, StyleSheet, ScrollView, Pressable, ActivityIndicator, Animated } from 'react-native';
-import { Text, TextInput, SegmentedButtons } from 'react-native-paper';
+import { Text, TextInput, SegmentedButtons, Checkbox } from 'react-native-paper';
 import { colors } from '../../../theme';
 import SafeScreen from '../../../components/SafeScreen';
 import { useFinances } from '../../../hooks/useFinances';
@@ -23,7 +23,7 @@ const AddTransaction = () => {
     addTransaction, 
     addTag 
   } = useFinances();
-  
+
   const [transactionType, setTransactionType] = useState('EXPENSE');
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
@@ -38,20 +38,16 @@ const AddTransaction = () => {
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
   const [showAccountPicker, setShowAccountPicker] = useState(false);
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
-
+  const [notify, setNotify] = useState(false);
 
   useEffect(() => {
     setThemeColor(transactionType === 'EXPENSE' ? colors.expense : colors.income);
   }, [transactionType]);
 
-  // Filtra categorias por tipo
   const filteredCategories = useMemo(() => {
-    return categories.filter(cat =>
-      cat.type === transactionType
-    );
+    return categories.filter(cat => cat.type === transactionType);
   }, [categories, transactionType]);
 
-  // Verifica se todos os campos obrigatórios estão preenchidos
   const isFormValid = useMemo(() => {
     return amount && description && category && account;
   }, [amount, description, category, account]);
@@ -64,9 +60,9 @@ const AddTransaction = () => {
     setSelectedTags([]);
     setDate(new Date());
     setTransactionType('EXPENSE');
+    setNotify(false);
   };
 
-  // Função para animar o sucesso
   const animateSuccess = () => {
     Animated.sequence([
       Animated.timing(showSuccessAnimation, {
@@ -87,13 +83,14 @@ const AddTransaction = () => {
     try {
       const transactionData = {
         type: transactionType,
-        amount: parseFloat(amount.replace(/\D/g, '')) / 100, // Converte de centavos para reais
+        amount: parseFloat(amount.replace(/\D/g, '')) / 100,
         description,
         date: date.toISOString(),
         categoryId: parseInt(category),
         accountId: parseInt(account),
         isRecurring: false,
-        tags: selectedTags.map(tag => tag.id) // Envia apenas os IDs das tags
+        notify,
+        tags: selectedTags.map(tag => tag.id)
       };
 
       const response = await addTransaction(transactionData);
@@ -117,9 +114,7 @@ const AddTransaction = () => {
     }
   };
 
-  // Memoize os callbacks de dismiss
   const handleDismissAccountModal = useCallback(() => {
-    console.log('[AddTransaction] Closing account modal');
     setShowAddAccountModal(false);
   }, []);
 
@@ -135,13 +130,10 @@ const AddTransaction = () => {
     return filteredCategories.find(cat => cat.id.toString() === categoryId)?.name;
   };
 
-  // Function to handle account button press
   const handleOpenAccountModal = () => {
-    console.log('[AddTransaction] Opening account modal');
     setShowAddAccountModal(true);
   };
 
-  // Função para criar uma nova tag
   const handleCreateTag = async (name) => {
     try {
       return await addTag(name);
@@ -213,16 +205,10 @@ const AddTransaction = () => {
             value={description}
             onChangeText={setDescription}
             mode="outlined"
-            style={[
-              styles.input,
-            ]}
+            style={[styles.input]}
             outlineColor={themeColor}
             activeOutlineColor={themeColor}
-            theme={{
-              colors: {
-                placeholder: `${themeColor}99`,
-              },
-            }}
+            theme={{ colors: { placeholder: `${themeColor}99` } }}
           />
 
           <CustomDatePicker
@@ -232,9 +218,7 @@ const AddTransaction = () => {
             onPress={() => setShowDatePicker(true)}
             onDateChange={(event, selectedDate) => {
               setShowDatePicker(false);
-              if (selectedDate) {
-                setDate(selectedDate);
-              }
+              if (selectedDate) setDate(selectedDate);
             }}
             themeColor={themeColor}
             maximumDate={new Date()}
@@ -272,6 +256,15 @@ const AddTransaction = () => {
             themeColor={themeColor}
           />
 
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 12 }}>
+            <Checkbox
+              status={notify ? 'checked' : 'unchecked'}
+              onPress={() => setNotify(!notify)}
+              color={themeColor}
+            />
+            <Text style={{ color: colors.text }}>Deseja receber notificação por e-mail?</Text>
+          </View>
+
           <Pressable
             onPress={handleAddTransaction}
             disabled={loading || !isFormValid}
@@ -283,21 +276,14 @@ const AddTransaction = () => {
                     ? `${themeColor}80`
                     : themeColor
                   : `${themeColor}40`,
-
-                elevation: isFormValid
-                  ? pressed
-                    ? 0
-                    : 4
-                  : 0,
+                elevation: isFormValid ? (pressed ? 0 : 4) : 0,
               }
             ]}
           >
             {loading ? (
               <ActivityIndicator color="white" />
             ) : (
-              <Text style={styles.saveButtonText}>
-                Salvar
-              </Text>
+              <Text style={styles.saveButtonText}>Salvar</Text>
             )}
           </Pressable>
 
@@ -307,29 +293,20 @@ const AddTransaction = () => {
               style={styles.actionButton}
             >
               <Icon name="bank-plus" size={24} color={themeColor} />
-              <Text style={[styles.actionButtonText, { color: themeColor }]}>
-                Nova Conta
-              </Text>
+              <Text style={[styles.actionButtonText, { color: themeColor }]}>Nova Conta</Text>
             </Pressable>
 
             <Pressable
-              onPress={() => {
-                console.log('[AddTransaction] Opening category modal');
-                setShowAddCategoryModal(true);
-              }}
+              onPress={() => setShowAddCategoryModal(true)}
               style={styles.actionButton}
             >
               <Icon name="shape-plus" size={24} color={themeColor} />
-              <Text style={[styles.actionButtonText, { color: themeColor }]}>
-                Nova Categoria
-              </Text>
+              <Text style={[styles.actionButtonText, { color: themeColor }]}>Nova Categoria</Text>
             </Pressable>
           </View>
         </View>
       </ScrollView>
 
-
-      {/* Bottom Sheets */}
       <AddAccountModal
         visible={showAddAccountModal}
         onDismiss={handleDismissAccountModal}
@@ -464,4 +441,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AddTransaction; 
+export default AddTransaction;
