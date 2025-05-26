@@ -7,6 +7,7 @@ const Preferences = () => {
   const [notifications, setNotifications] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
   const [biometric, setBiometric] = useState(false);
+  const [Monthly_Summary , setMonthly_Summary] = useState(false);
 
   return (
     <SafeScreen>
@@ -20,6 +21,16 @@ const Preferences = () => {
               <Switch
                 value={notifications}
                 onValueChange={setNotifications}
+              />
+            )}
+          />
+
+          <List.Item
+            title="Resumo Mensal"
+            right={() => (
+              <Switch
+                value={Monthly_Summary}
+                onValueChange={setMonthly_Summary}
               />
             )}
           />
