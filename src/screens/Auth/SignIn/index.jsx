@@ -7,6 +7,7 @@ import {
 import { TextInput, Button, Text, Divider } from "react-native-paper";
 import { colors } from '../../../theme';
 import { useAuth } from '../../../hooks/useAuth';
+import RequestReset from './RequestReset';
 
 const SignIn = ({ navigation }) => {
     const { signIn } = useAuth();
@@ -14,11 +15,13 @@ const SignIn = ({ navigation }) => {
     const [password, setPassword] = useState("");
     const [emailError, setEmailError] = useState("");
     const [passwordError, setPasswordError] = useState("");
+    const [generalError, setGeneralError] = useState("");
     const [secureTextEntry, setSecureTextEntry] = useState(true);
 
     const handleSignIn = async () => {
         setEmailError("");
         setPasswordError("");
+        setGeneralError("");
 
         try {
             await signIn(email, password);
@@ -35,8 +38,13 @@ const SignIn = ({ navigation }) => {
                     }
                 });
             }
+
+            if (error?.response?.data?.message) {
+                setGeneralError(error.response.data.message);
+            }
         }
     };
+
 
     return (
         <View style={styles.container}>
@@ -71,20 +79,21 @@ const SignIn = ({ navigation }) => {
                     }
                 />
 
-                {(emailError || passwordError) && (
+                {(generalError || emailError || passwordError) && (
                     <View style={styles.errorContainer}>
+                        {generalError ? <Text style={styles.errorText}>• {generalError}</Text> : null}
                         {emailError ? <Text style={styles.errorText}>• {emailError}</Text> : null}
                         {passwordError ? <Text style={styles.errorText}>• {passwordError}</Text> : null}
                     </View>
                 )}
 
                 <TouchableOpacity
-                    onPress={() => {/* Navegação para recuperação de senha */}}
-                    style={styles.forgotPassword}
+                onPress={() => navigation.navigate('RequestReset')}
+                style={styles.forgotPassword}
                 >
-                    <Text variant="bodyMedium" style={styles.forgotPasswordText}>
-                        Esqueceu sua senha?
-                    </Text>
+                <Text variant="bodyMedium" style={styles.forgotPasswordText}>
+                    Esqueceu sua senha?
+                </Text>
                 </TouchableOpacity>
 
                 <Button
